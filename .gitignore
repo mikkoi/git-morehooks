@@ -18,3 +18,7 @@ nytprof.out
 *.o
 *.bs
 /_eumm/
+# Project (build) related extra files
+Git-Hooks-Extra-*
+.build
+
