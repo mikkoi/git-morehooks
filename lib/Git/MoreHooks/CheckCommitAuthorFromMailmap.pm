@@ -57,7 +57,7 @@ user can override these via the command line option I<--author>.
 To enable CheckCommitAuthorFromMailmap plugin, you need
 to add it to the githooks.plugin configuration option:
 
-    git config --add githooks.plugin CheckCommitAuthorFromMailmap
+    git config --add githooks.plugin Git::MoreHooks::CheckCommitAuthorFromMailmap
 
 Git::MoreHooks::CheckCommitAuthorFromMailmap plugin hooks itself to the hooks below:
 
