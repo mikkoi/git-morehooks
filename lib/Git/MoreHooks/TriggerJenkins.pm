@@ -1,7 +1,9 @@
 ## no critic (Documentation::PodSpelling)
 ## no critic (Documentation::RequirePodAtEnd)
 ## no critic (Documentation::RequirePodSections)
-## no critic (ValuesAndExpressions::RequireInterpolationOfMetachars)
+# no critic (ValuesAndExpressions::RequireInterpolationOfMetachars)
+## no critic (InputOutput::RequireCheckedSyscalls)
+#
 
 package Git::MoreHooks::TriggerJenkins;
 
@@ -26,7 +28,7 @@ Use package via
 L<Git::Hooks|Git::Hooks>
 interface (configuration in Git config file).
 
-=for Pod::Coverage trigger_build_at_server
+=for Pod::Coverage handle_affected_refs
 
 
 =head1 DESCRIPTION
@@ -99,6 +101,12 @@ If set to 0, only trigger build if the job already exists.
 If set to 1, create a new Jenkins job (project), unless it already exists).
 Default 1.
 
+=head2 githooks.triggerjenkins.create-job-template FILENAME
+
+If set, read the file as a L<Template Toolkit|Template> template file,
+and use it to create a new Jenkins job. The template needs to create
+a job config XML.
+
 =head2 githooks.triggerjenkins.quiet [01]
 
 If set to 1, do not print out anything to explain to user what was done.
@@ -124,7 +132,7 @@ Jenkins job.
 This module exports routines that can be used directly without
 using all of Git::Hooks infrastructure.
 
-=head2 trigger_build_at_server GIT
+=head2 handle_affected_refs GIT
 
 This is the routine used to implement the C<post-receive> hook. It needs a
 C<Git::More> object for parameter.
@@ -162,382 +170,51 @@ Cxense Sweden AB's permission.
 use Git::Hooks qw{:DEFAULT :utils};
 use Path::Tiny;
 use Log::Any qw{$log};
-require Git::Mailmap;
+use Carp;
 
 my $PKG = __PACKAGE__;
-(my $CFG = __PACKAGE__) =~ s/.*::/githooks./;
+(my $CFG = __PACKAGE__) =~ s/.*::/githooks./msx;
 
 # Hook configuration.
-sub _setup_config {
+sub setup_config {
     my ($git) = @_;
 
     my $config = $git->get_config();
     $config->{lc $CFG} //= {};
     my $default = $config->{lc $CFG};
 
-    $default->{'createjob'}    //= [1];
+    $default->{'create-new'}   //= [1];
     $default->{'quiet'}        //= [0];
     $default->{'force'}        //= [0];
+    $default->{'create-job-template'} //= ['JenkinsJobTemplate.tt2'];
 
     return;
 }
 
-##########
-
-sub grok_msg_jiras {
-    my ($git, $msg) = @_;
-
-    my $matchkey = $git->get_config($CFG => 'matchkey');
-    my @matchlog = $git->get_config($CFG => 'matchlog');
-
-    # Grok the JIRA issue keys from the commit log
-    if (@matchlog) {
-        my @keys;
-        foreach my $matchlog (@matchlog) {
-            if (my ($match) = ($msg =~ /$matchlog/)) {
-                push @keys, ($match =~ /$matchkey/go);
-            }
-        }
-        return @keys;
-    } else {
-        return $msg =~ /$matchkey/go;
-    }
-}
-
-sub _jira {
-    my ($git) = @_;
-
-    my $cache = $git->cache($PKG);
-
-    # Connect to JIRA if not yet connected
-    unless (exists $cache->{jira}) {
-        unless (eval { require JIRA::REST; }) {
-            $git->error($PKG, "Please, install Perl module JIRA::REST to use the TriggerJenkins plugin", $@);
-            return;
-        }
-
-        my %jira;
-        for my $option (qw/jiraurl jirauser jirapass/) {
-            $jira{$option} = $git->get_config($CFG => $option)
-                or $git->error($PKG, "missing $CFG.$option configuration attribute")
-                    and return;
-        }
-        $jira{jiraurl} =~ s:/+$::; # trim trailing slashes from the URL
-
-        my $jira = eval { JIRA::REST->new($jira{jiraurl}, $jira{jirauser}, $jira{jirapass}) };
-        length $@
-            and $git->error($PKG, "cannot connect to the JIRA server at '$jira{jiraurl}' as '$jira{jirauser}", $@)
-                and return;
-        $cache->{jira} = $jira;
-    }
-
-    return $cache->{jira};
-}
-
-# Returns a JIRA::REST object or undef if there is any problem
-
-sub get_issue {
-    my ($git, $key) = @_;
-
-    my $jira = _jira($git);
-
-    my $cache = $git->cache($PKG);
-
-    # Try to get the issue from the cache
-    unless (exists $cache->{keys}{$key}) {
-        $cache->{keys}{$key} = eval { $jira->GET("/issue/$key") };
-        length $@
-            and $git->error($PKG, "cannot get issue $key", $@)
-                and return;
-    }
-
-    return $cache->{keys}{$key};
-}
-
-sub check_codes {
-    my ($git) = @_;
-
-    my @codes;
-
-  CODE:
-    foreach my $check ($git->get_config($CFG => 'check-code')) {
-        my $code;
-        if ($check =~ s/^file://) {
-            $code = do $check;
-            unless ($code) {
-                if (length $@) {
-                    $git->error($PKG, "couldn't parse option check-code ($check)", $@);
-                } elsif (! defined $code) {
-                    $git->error($PKG, "couldn't do option check-code ($check)", $!);
-                } else {
-                    $git->error($PKG, "couldn't run option check-code ($check)");
-                }
-                next CODE;
-            }
-        } else {
-            $code = eval $check; ## no critic (BuiltinFunctions::ProhibitStringyEval)
-            length $@
-                and $git->error($PKG, "couldn't parse option check-code value", $@)
-                    and next CODE;
-        }
-        is_code_ref($code)
-            or $git->error($PKG, "option check-code must end with a code ref")
-                and next CODE;
-        push @codes, $code;
-    }
-
-    return @codes;
-}
-
-sub _check_jira_keys {          ## no critic (ProhibitExcessComplexity)
-    my ($git, $commit, $ref, @keys) = @_;
-
-    unless (@keys) {
-        if ($git->get_config($CFG => 'require')) {
-            my $shortid = exists $commit->{commit} ? substr($commit->{commit}, 0, 8) : '';
-            $git->error($PKG, "commit $shortid must cite a JIRA in its message");
-            return 0;
-        } else {
-            return 1;
-        }
-    }
-
-    my @issues;
-
-    my %projects    = map {($_ => undef)} $git->get_config($CFG => 'project');
-    my $unresolved  = $git->get_config($CFG => 'unresolved');
-    my %status      = map {($_ => undef)} $git->get_config($CFG => 'status');
-    my %issuetype   = map {($_ => undef)} $git->get_config($CFG => 'issuetype');
-    my $by_assignee = $git->get_config($CFG => 'by-assignee');
-    my @versions;
-    foreach ($git->get_config($CFG => 'fixversion')) {
-        my ($branch, $version) = split ' ', $_, 2;
-        my $last_paren_match;
-        if ($branch =~ /^\^/) {
-            next unless $ref =~ qr/$branch/;
-            $last_paren_match = $+;
-        } else {
-            next unless $ref eq $branch;
-        }
-        if ($version =~ /^\^/) {
-            $version =~ s/\$\+/\Q$last_paren_match\E/g if defined $last_paren_match;
-            push @versions, qr/$version/;
-        } else {
-            $version =~ s/\$\+/$last_paren_match/g if defined $last_paren_match;
-            push @versions, $version;
-        }
-    }
-
-    my $errors = 0;
-
-  KEY:
-    foreach my $key (@keys) {
-        not %projects
-            or $key =~ /([^-]+)/ and exists $projects{$1}
-                or $git->error($PKG, "do not cite issue $key. This repository accepts only issues from: "
-                                   . join(' ', sort keys %projects))
-                    and next KEY;
-
-        my $issue = get_issue($git, $key)
-            or ++$errors
-                and next KEY;
-
-        if (%issuetype && ! exists $issuetype{$issue->{fields}{issuetype}{name}}) {
-            my @issuetypes = sort keys %issuetype;
-            $git->error(
-                $PKG,
-                "issue $key cannot be used because it is of the unapproved type '$issue->{fields}{issuetype}{name}'",
-                "You can use the following issue types: @issuetypes",
-            );
-            ++$errors;
-            next KEY;
-        }
-
-        if (%status && ! exists $status{$issue->{fields}{status}{name}}) {
-            my @statuses = sort keys %status;
-            $git->error(
-                $PKG,
-                "issue $key cannot be used because it is in the unapproved status '$issue->{fields}{status}{name}'",
-                "The following statuses are approved: @statuses",
-            );
-            ++$errors;
-            next KEY;
-        }
-
-        if ($unresolved && defined $issue->{fields}{resolution}) {
-            $git->error($PKG, "issue $key cannot be used because it is already resolved");
-            ++$errors;
-            next KEY;
-        }
-
-      VERSION:
-        foreach my $version (@versions) {
-            foreach my $fixversion (@{$issue->{fields}{fixVersions}}) {
-                if (ref $version) {
-                    next VERSION if $fixversion->{name} =~ $version;
-                } else {
-                    next VERSION if $fixversion->{name} eq $version;
-                }
-            }
-            $git->error($PKG, "issue $key has no fixVersion matching '$version', which is required for commits affecting '$ref'");
-            ++$errors;
-            next KEY;
-        }
-
-        if ($by_assignee) {
-            my $user = $git->authenticated_user()
-                or $git->error($PKG, "cannot grok the authenticated user")
-                    and ++$errors
-                        and next KEY;
-
-            if (my $assignee = $issue->{fields}{assignee}) {
-                my $name = $assignee->{name};
-                $user eq $name
-                    or $git->error($PKG, "issue $key should be assigned to '$user', not '$name'")
-                        and ++$errors
-                            and next KEY;
-            } else {
-                $git->error($PKG, "issue $key should be assigned to '$user', but it's unassigned");
-                ++$errors;
-                next KEY;
-            }
-        }
-
-        push @issues, $issue;
-    }
-
-    foreach my $code (check_codes($git)) {
-        my $ok = eval { $code->($git, $commit, _jira($git), @issues) };
-        if (defined $ok) {
-            ++$errors unless $ok;
-        } elsif (length $@) {
-            $git->error($PKG, "error while evaluating check-code: $@");
-            ++$errors;
-        }
-    }
-
-    return $errors == 0;
-}
-
-sub check_commit_msg {
-    my ($git, $commit, $ref) = @_;
-
-    return _check_jira_keys($git, $commit, $ref, uniq(grok_msg_jiras($git, $commit->{body})));
-}
-
-sub check_patchset {
-    my ($git, $opts) = @_;
-
-    _setup_config($git);
-
-    return 1 if im_admin($git);
-
-    my $sha1   = $opts->{'--commit'};
-    my $commit = $git->get_commit($sha1);
-
-    # The --branch argument contains the branch short-name if it's in the
-    # refs/heads/ namespace. But we need to always use the branch long-name,
-    # so we change it here.
-    my $branch = $opts->{'--branch'};
-    $branch = "refs/heads/$branch"
-        unless $branch =~ m:^refs/:;
-
-    return 1 unless is_ref_enabled($branch, $git->get_config($CFG => 'ref'));
-
-    return check_commit_msg($git, $commit, $branch);
-}
-
-sub check_message_file {
-    my ($git, $commit_msg_file) = @_;
-
-    _setup_config($git);
-
-    my $current_branch = $git->get_current_branch();
-    return 1 unless is_ref_enabled($current_branch, $git->get_config($CFG => 'ref'));
-
-    my $msg = eval { path($commit_msg_file)->slurp };
-    defined $msg
-        or $git->error($PKG, "cannot open file '$commit_msg_file' for reading: $@")
-            and return 0;
-
-    # Remove comment lines from the message file contents.
-    $msg =~ s/^#[^\n]*\n//mgs;
-
-    return check_commit_msg(
-        $git,
-        { body => $msg }, # fake a commit hash to simplify check_commit_msg
-        $current_branch,
-    );
-}
-
-sub check_ref {
-    my ($git, $ref) = @_;
-
-    return 1 unless is_ref_enabled($ref, $git->get_config($CFG => 'ref'));
-
-    my $errors = 0;
-
-    foreach my $commit ($git->get_affected_ref_commits($ref)) {
-        check_commit_msg($git, $commit, $ref)
-            or ++$errors;
-    }
-
-    # Disconnect from JIRA
-    $git->clean_cache($PKG);
-
-    return $errors == 0;
-}
-
-# This routine can act both as an update or a pre-receive hook.
-sub check_affected_refs {
-    my ($git) = @_;
-
-    _setup_config($git);
-
-    return 1 if im_admin($git);
-
-    my $errors = 0;
-
-    foreach my $ref ($git->get_affected_refs()) {
-        check_ref($git, $ref)
-            or ++$errors;
-    }
-
-    # Disconnect from JIRA
-    $git->clean_cache($PKG);
-
-    return $errors == 0;
-}
-
-sub notify_commit_msg {
-    my ($git, $commit, $ref, $visibility) = @_;
-
-    my @keys = uniq(grok_msg_jiras($git, $commit->{body}));
-
-    return 0 unless @keys;
-
-    my $jira = _jira($git);
-
-    my %comment = (
-        body => "[$PKG] commit refers to this issue:\n\n"
-            . $git->command(show => '--stat', $commit->{commit}),
-    );
-    $comment{visibility} = $visibility if $visibility;
-
-    my $errors = 0;
-
-    foreach my $key (@keys) {
-        eval { $jira->POST("/issue/$key/comment", \%comment); 1; }
-            or $git->error($PKG, "Cannot add a comment to JIRA issue $key:", $@)
-            and ++$errors;
-    }
-
-    return $errors;
-}
-
 sub configure_a_new_job {
-    my ($job_name) = @_;
-    return 'XML';
+    my ($git, %template_vars) = @_;
+    if (! eval { require Template; }) {
+        $git->error($PKG, 'Install Module Template (package Template-Toolkit)'
+            . ' to use this plugin!');
+        return;
+    }
+    my $config = {
+        'INCLUDE_PATH' => Path::Tiny::path(q{.})->realpath,
+        'ENCODING' => 'utf8',
+        'INTERPOLATE' => 0,
+        'ANYCASE' => 0,
+        'ABSOLUTE' => 1,
+        'RELATIVE' => 1,
+    };
+    my $template = Template->new($config);
+    my $xml_ready;
+    $template->process(
+        $git->get_config($CFG => 'create-job-template'),
+        \%template_vars,
+        \$xml_ready,
+    ) || $git->error($PKG, $template->error());
+    # print Dumper($xml_ready);
+    return $xml_ready;
 }
 
 sub trigger_branch {
@@ -545,31 +222,28 @@ sub trigger_branch {
 
     my $cache = $git->cache($PKG);
     my $jenkins = $cache->{'jenkins'};
-    # TODO Croak if called without Jenkins in buffer!
+    if (!defined $jenkins) {
+        croak('Internal error: No Jenkins in Git::Hooks cache!');
+    }
     if (! is_ref_enabled($ref, $git->get_config($CFG => 'ref'))) {
         return;
     }
     my $user = $git->authenticated_user();
-    my $email_domain = $git->get_config($CFG => 'email-domain');
 
-    # Get the job/project from Jenkins if it exists.
-    my $jobs = $jenkins->current_status({
-            'extra_params' => {
-                'tree' => 'jobs[name,color]'
-            }
-        });
-    my ($job_name) = $ref =~
-         m/^[[:graph:]]+\/[[:graph:]]+\/([[:graph:]]+)$/msx;
-    my $this_job;
-    foreach my $job (@{$jobs->{'jobs'}}) {
-        if ($job->{'name'} eq $job_name) {
-            $this_job = $job;
-        }
-    }
+    my $job_name = job_name($ref);
+    my $this_job = get_job_from_jenkins($git, $job_name);
 
     # If project not exists, create it.
     if (!defined $this_job) {
-        my $xml_conf = configure_a_new_job($job_name);
+        my %job_info = (
+            'description' => $job_name,
+            'branch' => q{*/} . $job_name,
+        );
+        if (defined $git->get_config($CFG => 'email-domain')) {
+            $job_info{'recipients'} = $user . q{@}
+                . $git->get_config($CFG => 'email-domain');
+        }
+        my $xml_conf = configure_a_new_job($git, %job_info);
         $this_job = $jenkins->create_job($job_name, $xml_conf);
     }
 
@@ -599,31 +273,72 @@ sub trigger_branch {
         print "Status: $why\n";
     }
 
+   return 1;
+}
 
+sub delete_job {
+    my ($git, $ref) = @_;
 
-    # my $errors = 0;
-    #
-    # foreach my $commit ($git->get_affected_ref_commits($ref)) {
-    #     $errors += notify_commit_msg($git, $commit, $ref, $visibility);
-    # }
-    #
-    # return $errors == 0;
+    my $cache = $git->cache($PKG);
+    my $jenkins = $cache->{'jenkins'};
+    if (!defined $jenkins) {
+        croak('Internal error: No Jenkins in Git::Hooks cache!');
+    }
+    my $user = $git->authenticated_user();
 
-       #                  print 'new_job: ', Dumper($new_job);
-       #                     my $success  = $api->trigger_build('mikko-koivunalho-EAS-66801');
-       #                        print 'trigger_build:', Dumper($success);
-       #                    }
-       #                    my $build_queue = $api->build_queue();
-       #                    print 'build_queue:', Dumper($build_queue);
+    my $job_name = job_name($ref);
+    my $this_job = get_job_from_jenkins($git, $job_name);
+    if (defined $this_job) {
+        # Delete the job
+        my $deleted = $jenkins->delete_project($job_name);
+        if (!defined $deleted) {
+            $git->error($PKG, "Failed to delete job '$job_name'!");
+            return;
+        }
+        print "Job '$job_name' deleted from Jenkins.\n";
+    } else {
+        print "Job '$job_name' not in Jenkins. Not deleted.\n";
+    }
 
    return 1;
 }
 
+sub job_name {
+    my ($ref) = @_;
+    my ($branch) = $ref =~
+         m/^[^\/]+\/[^\/]+\/([[:graph:]]+)$/msx;
+    (my $job_name = $branch) =~ s/\//-/msx;
+    return $job_name;
+}
+
+# Get the job/project from Jenkins if it exists.
+sub get_job_from_jenkins {
+    my ($git, $job_name) = @_;
+    my $cache = $git->cache($PKG);
+    my $jenkins = $cache->{'jenkins'};
+    if (!defined $jenkins) {
+        croak('Internal error: No Jenkins in Git::Hooks cache!');
+    }
+    my $jobs = $jenkins->current_status({
+            'extra_params' => {
+                'tree' => 'jobs[name,color]'
+            }
+        });
+    my $this_job;
+    foreach my $job (@{$jobs->{'jobs'}}) {
+        if ($job->{'name'} eq $job_name) {
+            $this_job = $job;
+            last;
+        }
+    }
+    return $this_job;
+}
+
 # This routine can act as a post-receive hook.
-sub trigger_affected_refs {
+sub handle_affected_refs {
     my ($git) = @_;
 
-    _setup_config($git);
+    setup_config($git);
 
     # Connect to Jenkins if not already connected. Check from cache.
     my $cache = $git->cache($PKG);
@@ -658,8 +373,17 @@ sub trigger_affected_refs {
         $cache->{'jenkins'} = $jenkins;
     }
 
-    foreach my $branch ($git->get_affected_refs()) {
-        trigger_branch($git, $branch);
+    foreach my $ref ($git->get_affected_refs()) {
+        if (! is_ref_enabled($ref, $git->get_config($CFG => 'ref'))) {
+            next;
+        }
+
+        my ($old_commit, $new_commit) = $git->get_affected_ref_range($ref);
+        if ($new_commit =~ m/[0]{1,}/msx) { # Just zeros, deleted branch.
+            delete_job($git, $ref);
+        } else {
+            trigger_branch($git, $ref);
+        }
     }
 
     # Disconnect from Jenkins
@@ -669,7 +393,7 @@ sub trigger_affected_refs {
 }
 
 # Install hooks
-POST_RECEIVE     \&trigger_affected_refs;
+POST_RECEIVE     \&handle_affected_refs;
 1;
 
 __END__
