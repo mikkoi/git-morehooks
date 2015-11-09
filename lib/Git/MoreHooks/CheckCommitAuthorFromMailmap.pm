@@ -23,7 +23,7 @@ Package Git::MoreHooks is currently being developed so changes in the existing h
 
 Use package via
 L<Git::Hooks|Git::Hooks>
-interface (git config file).
+interface (configuration in Git config file).
 
 =for Pod::Coverage check_commit_at_client check_commit_at_server
 
