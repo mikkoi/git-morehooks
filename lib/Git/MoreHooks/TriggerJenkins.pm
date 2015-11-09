@@ -197,6 +197,7 @@ sub setup_config {
     $default->{'quiet'}        //= [0];
     $default->{'force'}        //= [0];
     $default->{'create-job-template'} //= ['JenkinsJobTemplate.tt2'];
+    # TODO Fix create-new -> create-job or maybe opposite!
 
     return;
 }
@@ -247,7 +248,7 @@ sub trigger_branch {
     if (!defined $this_job) {
         my %job_info = (
             'description' => $job_name,
-            'branch' => q{*/} . $job_name,
+            'branch' => $ref,
         );
         if (defined $git->get_config($CFG => 'email-domain')) {
             $job_info{'recipients'} = $user . q{@}
