@@ -13,3 +13,4 @@ MANIFEST.bak
 perlcritic.rc
 .proverc
 dist.ini
+local/
