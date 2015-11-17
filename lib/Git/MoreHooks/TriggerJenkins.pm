@@ -101,11 +101,12 @@ If set use this Jenkins project instead of extracting the name from ref name.
 
 =head2 githooks.triggerjenkins.create-job [01]
 
+# TODO Implement!
 If set to 0, only trigger build if the job already exists.
 If set to 1, create a new Jenkins job (project), unless it already exists).
 Default 1.
 
-=head2 githooks.triggerjenkins.create-job-template FILENAME
+=head2 githooks.triggerjenkins.job-template FILENAME
 
 If set, read the file as a L<Template Toolkit|Template> template file,
 and use it to create a new Jenkins job. The template needs to create
@@ -120,6 +121,7 @@ Default 0.
 
 =head2 githooks.triggerjenkins.force [01]
 
+# TODO Implement!
 If set to 1, force a new build by cancelling the running build and scheduling
 a new.
 Default 0.
@@ -130,6 +132,13 @@ The domain name part of email address,
 i.e. S<"domain.com"> in S<<user.name@domain.com>>.
 If not present, notification email will not be configured into
 Jenkins job.
+
+=head2 githooks.triggerjenkins.allow-commit-msg REGEXP
+
+If no commit message in the push matches this regular expression,
+then no build is triggered.
+This can be useful if the repository has often small configuration changes
+which are not tested.
 
 =head1 EXPORTS
 
@@ -196,14 +205,14 @@ sub setup_config {
     $default->{'create-new'}   //= ['1'];
     $default->{'quiet'}        //= ['0'];
     $default->{'force'}        //= ['0'];
-    $default->{'create-job-template'} //= ['JenkinsJobTemplate.tt2'];
+    $default->{'job-template'} //= ['-unit-test JenkinsJobTemplate.tt2'];
     # TODO Fix create-new -> create-job or maybe opposite!
     # TODO Check valid values!
     return;
 }
 
 sub configure_a_new_job {
-    my ($git, %template_vars) = @_;
+    my ($git, $tpl_filename, %template_vars) = @_;
     if (! eval { require Template; }) {
         $git->error($PKG, 'Install Module Template (package Template-Toolkit)'
             . ' to use this plugin!');
@@ -220,7 +229,7 @@ sub configure_a_new_job {
     my $template = Template->new($config);
     my $xml_ready;
     $template->process(
-        $git->get_config($CFG => 'create-job-template'),
+        $tpl_filename,
         \%template_vars,
         \$xml_ready,
     ) || $git->error($PKG, $template->error());
@@ -241,11 +250,11 @@ sub trigger_branch {
     }
     my $user = $git->authenticated_user();
 
-    my $job_name = job_name($ref);
-    my $this_job = get_job_from_jenkins($git, $job_name);
+    my %job_names = job_names($git, $ref);
 
     # If project not exists, create it.
-    if (!defined $this_job) {
+    foreach my $job_name (keys %job_names) {
+        my $this_job = get_job_from_jenkins($git, $job_name);
         my %job_info = (
             'description' => $job_name,
             'branch' => $ref,
@@ -254,37 +263,37 @@ sub trigger_branch {
             $job_info{'recipients'} = $user . q{@}
                 . $git->get_config($CFG => 'email-domain');
         }
-        my $xml_conf = configure_a_new_job($git, %job_info);
+        my $xml_conf = configure_a_new_job($git, $job_names{$job_name}, %job_info);
         $this_job = $jenkins->create_job($job_name, $xml_conf);
-    }
+        # Trigger build
+        my $triggered = $jenkins->trigger_build($job_name);
+        if (!defined $triggered) {
+            $git->error($PKG, "Failed to trigger job '$job_name'!");
+            return;
+        }
+        if ($git->get_config($CFG => 'quiet') eq '0') {
+            print "Job '$job_name' triggered to build.\n";
+        }
 
-    # Trigger build
-    my $triggered = $jenkins->trigger_build($job_name);
-    if (!defined $triggered) {
-        $git->error($PKG, "Failed to trigger job '$job_name'!");
-        return;
-    }
-    if ($git->get_config($CFG => 'quiet') eq '0') {
-        print "Job '$job_name' triggered to build.\n";
-    }
-
-    # Verify and tell user the status
-    my $build_queue = $jenkins->build_queue();
-    my $project_url;
-    my $why;
-    foreach my $item (@{$build_queue->{'items'}}) {
-        if ($item->{'task'}->{'name'} eq $job_name) {
-            $project_url = $item->{'task'}->{'url'};
-            $why = $item->{'why'};
-            last;
+        # Verify and tell user the status
+        my $build_queue = $jenkins->build_queue();
+        my $project_url;
+        my $why;
+        foreach my $item (@{$build_queue->{'items'}}) {
+            if ($item->{'task'}->{'name'} eq $job_name) {
+                $project_url = $item->{'task'}->{'url'};
+                $why = $item->{'why'};
+                last;
+            }
+        }
+        if (defined $project_url) {
+            print "URL: $project_url\n";
+        }
+        if (defined $why) {
+            print "Status: $why\n";
         }
     }
-    if (defined $project_url) {
-        print "URL: $project_url\n";
-    }
-    if (defined $why) {
-        print "Status: $why\n";
-    }
+
 
    return 1;
 }
@@ -297,29 +306,33 @@ sub delete_job {
     if (!defined $jenkins) {
         croak('Internal error: No Jenkins in Git::Hooks cache!');
     }
-    my $job_name = job_name($ref);
-    my $this_job = get_job_from_jenkins($git, $job_name);
-    if (defined $this_job) {
-        # Delete the job
-        my $deleted = $jenkins->delete_project($job_name);
-        if (!defined $deleted) {
-            $git->error($PKG, "Failed to delete job '$job_name'!");
-            return;
+    my %job_names = job_names($git, $ref);
+    foreach my $job_name (keys %job_names) {
+        my $this_job = get_job_from_jenkins($git, $job_name);
+        if (defined $this_job) {
+            # Delete the job
+            my $deleted = $jenkins->delete_project($job_name);
+            if (!defined $deleted) {
+                $git->error($PKG, "Failed to delete job '$job_name'!");
+                return;
+            }
+            print "Job '$job_name' deleted from Jenkins.\n";
+        } else {
+            print "Job '$job_name' not in Jenkins. Not deleted.\n";
         }
-        print "Job '$job_name' deleted from Jenkins.\n";
-    } else {
-        print "Job '$job_name' not in Jenkins. Not deleted.\n";
     }
-
-   return 1;
+    return 1;
 }
 
-sub job_name {
-    my ($ref) = @_;
+sub job_names {
+    my ($git, $ref) = @_;
     my ($branch) = $ref =~
          m/^[^\/]+\/[^\/]+\/([[:graph:]]+)$/msx;
-    (my $job_name = $branch) =~ s/\//-/msx;
-    return $job_name;
+    (my $job_name = $branch) =~ s/\//-/msx; # Replace slash-char with dash-char.
+    my %job_names = map {
+            $job_name . (split q{ })[0], (split q{ })[1] ## no critic (ValuesAndExpressions::ProhibitCommaSeparatedStatements)
+        } $git->get_config($CFG => 'job-template');
+    return %job_names;
 }
 
 # Get the job/project from Jenkins if it exists.
@@ -395,12 +408,12 @@ sub handle_affected_refs {
         if ($new_commit =~ m/^[0]{1,}$/msx) { # Just zeros, deleted branch.
             delete_job($git, $ref);
         } else {
-            my $commit_ids = $git->get_affected_ref_commit_ids($ref);
+            my @commit_ids = $git->get_affected_ref_commit_ids($ref);
             my $nr_msg_ok_to_trigger = 0;
-            foreach my $commit_id (@{$commit_ids}) {
+            foreach my $commit_id (@commit_ids) {
                 my $commit_msg = $git->get_commit_msg($commit_id);
-                if ($git->get_config($CFG => 'allow-commit-msg')
-                    && $commit_msg =~ m/$git->get_config($CFG => 'allow-commit-msg')/msx) {
+                if (!$git->get_config($CFG => 'allow-commit-msg')
+                    || $commit_msg =~ m/$git->get_config($CFG => 'allow-commit-msg')/msx) {
                     $nr_msg_ok_to_trigger++;
                 }
             }
