@@ -193,12 +193,12 @@ sub setup_config {
     $config->{lc $CFG} //= {};
     my $default = $config->{lc $CFG};
 
-    $default->{'create-new'}   //= [1];
-    $default->{'quiet'}        //= [0];
-    $default->{'force'}        //= [0];
+    $default->{'create-new'}   //= ['1'];
+    $default->{'quiet'}        //= ['0'];
+    $default->{'force'}        //= ['0'];
     $default->{'create-job-template'} //= ['JenkinsJobTemplate.tt2'];
     # TODO Fix create-new -> create-job or maybe opposite!
-
+    # TODO Check valid values!
     return;
 }
 
@@ -264,7 +264,9 @@ sub trigger_branch {
         $git->error($PKG, "Failed to trigger job '$job_name'!");
         return;
     }
-    print "Job '$job_name' triggered to build.\n";
+    if ($git->get_config($CFG => 'quiet') eq '0') {
+        print "Job '$job_name' triggered to build.\n";
+    }
 
     # Verify and tell user the status
     my $build_queue = $jenkins->build_queue();
@@ -375,7 +377,9 @@ sub handle_affected_refs {
             return;
         }
         else {
-            print "Jenkins version: $jenkins_version\n";
+            if ($git->get_config($CFG => 'quiet') eq '0') {
+               print "Jenkins version: $jenkins_version\n";
+           }
         }
 
         # Set Jenkins in the cache.
@@ -391,7 +395,18 @@ sub handle_affected_refs {
         if ($new_commit =~ m/^[0]{1,}$/msx) { # Just zeros, deleted branch.
             delete_job($git, $ref);
         } else {
-            trigger_branch($git, $ref);
+            my $commit_ids = $git->get_affected_ref_commit_ids($ref);
+            my $nr_msg_ok_to_trigger = 0;
+            foreach my $commit_id (@{$commit_ids}) {
+                my $commit_msg = $git->get_commit_msg($commit_id);
+                if ($git->get_config($CFG => 'allow-commit-msg')
+                    && $commit_msg =~ m/$git->get_config($CFG => 'allow-commit-msg')/msx) {
+                    $nr_msg_ok_to_trigger++;
+                }
+            }
+            if($nr_msg_ok_to_trigger > 0) {
+                trigger_branch($git, $ref);
+            }
         }
     }
 
