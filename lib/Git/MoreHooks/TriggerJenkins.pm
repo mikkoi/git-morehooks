@@ -97,7 +97,8 @@ Specifies the Jenkins server access token. Required.
 
 =head2 githooks.triggerjenkins.project KEY
 
-If set use this Jenkins project instead of extracting the name from ref name.
+If set use this Jenkins project instead of extracting the name from ref name
+and suffix in option job-template.
 
 =head2 githooks.triggerjenkins.create-job [01]
 
@@ -106,11 +107,12 @@ If set to 0, only trigger build if the job already exists.
 If set to 1, create a new Jenkins job (project), unless it already exists).
 Default 1.
 
-=head2 githooks.triggerjenkins.job-template FILENAME
+=head2 githooks.triggerjenkins.job-template JOBSUFFIX FILENAME
 
-If set, read the file as a L<Template Toolkit|Template> template file,
-and use it to create a new Jenkins job. The template needs to create
-a job config XML.
+If set, contains the suffix of the Jenkins jobname and the template filename.
+Read the file as a L<Template Toolkit|Template> template file,
+and use it to create a new Jenkins job. The suffix and the filename
+are separated by space.
 
 =head2 githooks.triggerjenkins.quiet [01]
 
@@ -138,7 +140,7 @@ Jenkins job.
 If no commit message in the push matches this regular expression,
 then no build is triggered.
 This can be useful if the repository has often small configuration changes
-which are not tested.
+which need not or cannot be tested.
 
 =head1 EXPORTS
 
@@ -184,9 +186,13 @@ use Git::Hooks qw{:DEFAULT :utils};
 use Path::Tiny;
 use Log::Any qw{$log};
 use Carp;
+#use Const::Fast;
 
 my $PKG = __PACKAGE__;
 (my $CFG = __PACKAGE__) =~ s/.*::/githooks./msx;
+
+#const my $LAST_CHAR => -1;
+my $LAST_CHAR = -1;
 
 =for Pod::Coverage setup_config configure_a_new_job trigger_branch
 
@@ -233,7 +239,6 @@ sub configure_a_new_job {
         \%template_vars,
         \$xml_ready,
     ) || $git->error($PKG, $template->error());
-    # print Dumper($xml_ready);
     return $xml_ready;
 }
 
@@ -245,12 +250,17 @@ sub trigger_branch {
     if (!defined $jenkins) {
         croak('Internal error: No Jenkins in Git::Hooks cache!');
     }
-    if (! is_ref_enabled($ref, $git->get_config($CFG => 'ref'))) {
-        return;
-    }
+    # if (! is_ref_enabled($ref, $git->get_config($CFG => 'ref'))) {
+    #     return;
+    # }
     my $user = $git->authenticated_user();
 
-    my %job_names = job_names($git, $ref);
+    my %job_names;
+    if ($git->get_config($CFG => 'project')) {
+        $job_names{$git->get_config($CFG => 'project')} = 'dummy-filename';
+    } else {
+        %job_names = job_names_and_template_filenames($git, $ref);
+    }
 
     # If project not exists, create it.
     foreach my $job_name (keys %job_names) {
@@ -264,6 +274,7 @@ sub trigger_branch {
                 . $git->get_config($CFG => 'email-domain');
         }
         my $xml_conf = configure_a_new_job($git, $job_names{$job_name}, %job_info);
+        $log->debug('New job: %s', $xml_conf);
         $this_job = $jenkins->create_job($job_name, $xml_conf);
         # Trigger build
         my $triggered = $jenkins->trigger_build($job_name);
@@ -298,6 +309,18 @@ sub trigger_branch {
    return 1;
 }
 
+sub match_regexp_config_item {
+    my ($git, $item_name, $match) = @_;
+    my $item = $git->get_config($CFG => $item_name);
+    if ($item =~ m/^!/msx) {
+        $log->debug('Regexp starts with \'!\'. Match with negation!');
+        $item = substr $item, 0, $LAST_CHAR;
+        return $match !~ m/$item/msx;
+    } else {
+        return $match =~ m/$item/msx;
+    }
+}
+
 sub delete_job {
     my ($git, $ref) = @_;
 
@@ -306,7 +329,7 @@ sub delete_job {
     if (!defined $jenkins) {
         croak('Internal error: No Jenkins in Git::Hooks cache!');
     }
-    my %job_names = job_names($git, $ref);
+    my %job_names = job_names_and_template_filenames($git, $ref);
     foreach my $job_name (keys %job_names) {
         my $this_job = get_job_from_jenkins($git, $job_name);
         if (defined $this_job) {
@@ -316,22 +339,28 @@ sub delete_job {
                 $git->error($PKG, "Failed to delete job '$job_name'!");
                 return;
             }
-            print "Job '$job_name' deleted from Jenkins.\n";
+            if ($git->get_config($CFG => 'quiet') eq '0') {
+                print "Job '$job_name' deleted from Jenkins.\n";
+            }
         } else {
-            print "Job '$job_name' not in Jenkins. Not deleted.\n";
+            if ($git->get_config($CFG => 'quiet') eq '0') {
+                print "Job '$job_name' not in Jenkins. Not deleted.\n";
+            }
         }
     }
     return 1;
 }
 
-sub job_names {
+sub job_names_and_template_filenames {
     my ($git, $ref) = @_;
     my ($branch) = $ref =~
          m/^[^\/]+\/[^\/]+\/([[:graph:]]+)$/msx;
     (my $job_name = $branch) =~ s/\//-/msx; # Replace slash-char with dash-char.
+    ## no critic (ValuesAndExpressions::ProhibitCommaSeparatedStatements)
     my %job_names = map {
-            $job_name . (split q{ })[0], (split q{ })[1] ## no critic (ValuesAndExpressions::ProhibitCommaSeparatedStatements)
+            $job_name . (split q{ })[0], (split q{ })[1]
         } $git->get_config($CFG => 'job-template');
+    ## use critic (ValuesAndExpressions::ProhibitCommaSeparatedStatements)
     return %job_names;
 }
 
@@ -401,6 +430,9 @@ sub handle_affected_refs {
 
     foreach my $ref ($git->get_affected_refs()) {
         if (! is_ref_enabled($ref, $git->get_config($CFG => 'ref'))) {
+            if ($git->get_config($CFG => 'quiet') eq '0') {
+                print "Ref '$ref' not enabled.\n";
+            }
             next;
         }
 
@@ -412,12 +444,18 @@ sub handle_affected_refs {
             my $nr_msg_ok_to_trigger = 0;
             foreach my $commit_id (@commit_ids) {
                 my $commit_msg = $git->get_commit_msg($commit_id);
-                if (!$git->get_config($CFG => 'allow-commit-msg')
-                    || $commit_msg =~ m/$git->get_config($CFG => 'allow-commit-msg')/msx) {
+                $log->debug('commit message: \'%s\'.', (substr $commit_msg, 0, $LAST_CHAR));
+                if (!$git->get_config($CFG => 'allow-commit-msg')) {
+                    $log->debug('No allow-commit-msg options.Allow all.');
+                    $nr_msg_ok_to_trigger++;
+                }
+                if (match_regexp_config_item($git, 'allow-commit-msg', $commit_msg)) {
+                    $log->debug('Allowed commit msg.');
                     $nr_msg_ok_to_trigger++;
                 }
             }
-            if($nr_msg_ok_to_trigger > 0) {
+            $log->debug('nr_msg_ok_to_trigger: %s.', $nr_msg_ok_to_trigger);
+            if ($nr_msg_ok_to_trigger > 0) {
                 trigger_branch($git, $ref);
             }
         }
