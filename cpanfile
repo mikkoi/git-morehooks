@@ -7,6 +7,8 @@ requires 'Git::Hooks';
 requires 'Git::Mailmap';
 
 requires 'Log::Any';
+requires 'Const::Fast';
+
 requires 'Perl::Critic';
 requires 'Template';
 
