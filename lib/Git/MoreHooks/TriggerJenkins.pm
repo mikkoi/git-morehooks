@@ -147,6 +147,11 @@ which need not or cannot be tested.
 This module exports routines that can be used directly without
 using all of Git::Hooks infrastructure.
 
+=head2 handle_commit_at_client GIT
+
+This is the routine used to implement the C<post-commit> hook. It needs
+a C<Git::More> object.
+
 =head2 handle_affected_refs GIT
 
 This is the routine used to implement the C<post-receive> hook. It needs a
@@ -186,13 +191,12 @@ use Git::Hooks qw{:DEFAULT :utils};
 use Path::Tiny;
 use Log::Any qw{$log};
 use Carp;
-#use Const::Fast;
+use Const::Fast;
 
 my $PKG = __PACKAGE__;
 (my $CFG = __PACKAGE__) =~ s/.*::/githooks./msx;
 
-#const my $LAST_CHAR => -1;
-my $LAST_CHAR = -1;
+const my $LAST_CHAR_IN_STRING => -1;
 
 =for Pod::Coverage setup_config configure_a_new_job trigger_branch
 
@@ -208,6 +212,8 @@ sub setup_config {
     $config->{lc $CFG} //= {};
     my $default = $config->{lc $CFG};
 
+    # Default values given as an array.
+    # Array is default interpretation of config.
     $default->{'create-new'}   //= ['1'];
     $default->{'quiet'}        //= ['0'];
     $default->{'force'}        //= ['0'];
@@ -250,9 +256,6 @@ sub trigger_branch {
     if (!defined $jenkins) {
         croak('Internal error: No Jenkins in Git::Hooks cache!');
     }
-    # if (! is_ref_enabled($ref, $git->get_config($CFG => 'ref'))) {
-    #     return;
-    # }
     my $user = $git->authenticated_user();
 
     my %job_names;
@@ -314,7 +317,7 @@ sub match_regexp_config_item {
     my $item = $git->get_config($CFG => $item_name);
     if ($item =~ m/^!/msx) {
         $log->debug('Regexp starts with \'!\'. Match with negation!');
-        $item = substr $item, 0, $LAST_CHAR;
+        $item = substr $item, 0, $LAST_CHAR_IN_STRING;
         return $match !~ m/$item/msx;
     } else {
         return $match =~ m/$item/msx;
@@ -444,9 +447,9 @@ sub handle_affected_refs {
             my $nr_msg_ok_to_trigger = 0;
             foreach my $commit_id (@commit_ids) {
                 my $commit_msg = $git->get_commit_msg($commit_id);
-                $log->debug('commit message: \'%s\'.', (substr $commit_msg, 0, $LAST_CHAR));
+                $log->debug('commit message: \'%s\'.', (substr $commit_msg, 0, $LAST_CHAR_IN_STRING));
                 if (!$git->get_config($CFG => 'allow-commit-msg')) {
-                    $log->debug('No allow-commit-msg options.Allow all.');
+                    $log->debug('No option allow-commit-msg. Allow all.');
                     $nr_msg_ok_to_trigger++;
                 }
                 if (match_regexp_config_item($git, 'allow-commit-msg', $commit_msg)) {
@@ -467,9 +470,21 @@ sub handle_affected_refs {
     return 1;
 }
 
+sub handle_commit_at_client {
+    my ($git) = @_;
+
+    my $current_branch = $git->get_current_branch();
+    if (! is_ref_enabled($current_branch, $git->get_config($CFG => 'ref'))) {
+        if ($git->get_config($CFG => 'quiet') eq '0') {
+            print "Ref '$current_branch' not enabled.\n";
+        }
+        return 1;
+    }
+    # TODO handle_ref()!
+}
+
 # Install hooks
+POST_COMMIT      \&handle_commit_at_client;
 POST_RECEIVE     \&handle_affected_refs;
 1;
-
-__END__
 
