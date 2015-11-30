@@ -128,12 +128,22 @@ If set to 1, force a new build by cancelling the running build and scheduling
 a new.
 Default 0.
 
-=head2 githooks.triggerjenkins.email-domain STRING
+=head2 githooks.triggerjenkins.message-domain STRING
 
-The domain name part of email address,
+The domain name part of email or instant messager address,
 i.e. S<"domain.com"> in S<<user.name@domain.com>>.
-If not present, notification email will not be configured into
+If not present, notification message address will not be configured into
 Jenkins job.
+
+=head2 githooks.triggerjenkins.override-message-address REFSPEC STRING
+
+If present this option will override the notification message address.
+A common setting would be to have branches like S<user.name/branch-name>
+and these would be configured to send message to S<user.name@message-domain>.
+Then this option would be configured to <Smaster all-dev@what.ever>.
+This option can be set multiple times.
+The branch name will be matched against all rows so several branch name
+combinations/regular expressions are possible.
 
 =head2 githooks.triggerjenkins.allow-commit-msg REGEXP
 
@@ -197,6 +207,7 @@ my $PKG = __PACKAGE__;
 (my $CFG = __PACKAGE__) =~ s/.*::/githooks./msx;
 
 const my $LAST_CHAR_IN_STRING => -1;
+const my $EMPTY_STRING => q{};
 
 =for Pod::Coverage setup_config configure_a_new_job trigger_branch
 
@@ -275,6 +286,20 @@ sub trigger_branch {
         if (defined $git->get_config($CFG => 'email-domain')) {
             $job_info{'recipients'} = $user . q{@}
                 . $git->get_config($CFG => 'email-domain');
+        }
+        if (defined $git->get_config($CFG => 'override-message-address')) {
+            if (exists $job_info{'recipients'}) { # Override!
+                $job_info{'recipients'} = $EMPTY_STRING;
+            }
+            my @overrides = $git->get_config($CFG => 'override-message-address');
+            foreach my $override (@overrides) {
+                my ($refspec, $address) = split q{ }, $override, 2;
+                if ($ref =~ m/$refspec/msx) {
+                    $job_info{'recipients'} .=
+                        length $job_info{'recipients'} > 0 ? q{ } : q{}
+                        . $address;
+                }
+            }
         }
         my $xml_conf = configure_a_new_job($git, $job_names{$job_name}, %job_info);
         $log->debug('New job: %s', $xml_conf);
