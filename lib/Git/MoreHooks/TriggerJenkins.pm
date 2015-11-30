@@ -208,6 +208,7 @@ my $PKG = __PACKAGE__;
 
 const my $LAST_CHAR_IN_STRING => -1;
 const my $EMPTY_STRING => q{};
+const my $SPACE => q{ };
 
 =for Pod::Coverage setup_config configure_a_new_job trigger_branch
 
@@ -288,17 +289,18 @@ sub trigger_branch {
                 . $git->get_config($CFG => 'email-domain');
         }
         if (defined $git->get_config($CFG => 'override-message-address')) {
-            if (exists $job_info{'recipients'}) { # Override!
-                $job_info{'recipients'} = $EMPTY_STRING;
-            }
+            my $overriding_addresses = $EMPTY_STRING;
             my @overrides = $git->get_config($CFG => 'override-message-address');
             foreach my $override (@overrides) {
                 my ($refspec, $address) = split q{ }, $override, 2;
                 if ($ref =~ m/$refspec/msx) {
-                    $job_info{'recipients'} .=
-                        length $job_info{'recipients'} > 0 ? q{ } : q{}
-                        . $address;
+                    $overriding_addresses .= length $overriding_addresses > 0 ? $SPACE : $EMPTY_STRING;
+                    $overriding_addresses .= $address;
                 }
+            }
+            # Override only if matching branch name was found!
+            if (exists $job_info{'recipients'} && ) {
+                $job_info{'recipients'} = $overriding_addresses;
             }
         }
         my $xml_conf = configure_a_new_job($git, $job_names{$job_name}, %job_info);
@@ -332,8 +334,6 @@ sub trigger_branch {
             print "Status: $why\n";
         }
     }
-
-
    return 1;
 }
 
