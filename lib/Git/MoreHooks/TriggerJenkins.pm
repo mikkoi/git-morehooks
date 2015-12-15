@@ -64,6 +64,22 @@ option:
 
     git config --add githooks.plugin Git::MoreHooks::TriggerJenkins
 
+=head REQUIREMENTS
+
+Required additional dependencies:
+
+=over 8
+
+=item Jenkins::API
+
+=item Template
+
+=back
+
+These must be installed separately. They are not included as normal
+dependencies for Git::MoreHooks package because they are needed only
+by TriggerJenkins.
+
 =head1 CONFIGURATION
 
 The plugin is configured by the following git options.
@@ -161,6 +177,7 @@ using all of Git::Hooks infrastructure.
 
 This is the routine used to implement the C<post-commit> hook. It needs
 a C<Git::More> object.
+TODO Finish!
 
 =head2 handle_affected_refs GIT
 
@@ -299,7 +316,7 @@ sub trigger_branch {
                 }
             }
             # Override only if matching branch name was found!
-            if (exists $job_info{'recipients'} && ) {
+            if (exists $job_info{'recipients'} && $overriding_addresses) {
                 $job_info{'recipients'} = $overriding_addresses;
             }
         }
