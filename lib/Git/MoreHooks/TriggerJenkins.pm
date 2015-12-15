@@ -359,7 +359,7 @@ sub match_regexp_config_item {
     my $item = $git->get_config($CFG => $item_name);
     if ($item =~ m/^!/msx) {
         $log->debug('Regexp starts with \'!\'. Match with negation!');
-        $item = substr $item, 0, $LAST_CHAR_IN_STRING;
+        $item = substr $item, 1; # All string except first character.
         return $match !~ m/$item/msx;
     } else {
         return $match =~ m/$item/msx;
