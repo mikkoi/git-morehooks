@@ -130,6 +130,14 @@ Read the file as a L<Template Toolkit|Template> template file,
 and use it to create a new Jenkins job. The suffix and the filename
 are separated by space.
 
+=head2 githooks.triggerjenkins.job-template-var KEY=VALUE
+
+Define a key for value substitution in Jenkins job template. E.g.
+
+    [githooks "triggerjenkins"]
+        job-template-var = BUILD_DIR=/root/some/dir
+        job-template-var = AUTH2_TOKEN=1234567890abcdefg
+
 =head2 githooks.triggerjenkins.quiet [01]
 
 If set to 1, do not print out anything to explain to user what was done.
@@ -229,7 +237,9 @@ const my $SPACE => q{ };
 
 =for Pod::Coverage setup_config configure_a_new_job trigger_branch
 
-=for Pod::Coverage delete_job get_job_from_jenkins job_name
+=for Pod::Coverage delete_job get_job_from_jenkins job_names_and_template_filenames
+
+=for Pod::Coverage match_regexp_config_item
 
 =cut
 
@@ -243,10 +253,11 @@ sub setup_config {
 
     # Default values given as an array.
     # Array is default interpretation of config.
-    $default->{'create-new'}   //= ['1'];
-    $default->{'quiet'}        //= ['0'];
-    $default->{'force'}        //= ['0'];
-    $default->{'job-template'} //= ['-unit-test JenkinsJobTemplate.tt2'];
+    $default->{'create-new'}         //= ['1'];
+    $default->{'quiet'}              //= ['0'];
+    $default->{'force'}              //= ['0'];
+    $default->{'job-template'}       //= ['-unit-test JenkinsJobTemplate.tt2'];
+    $default->{'job-template-var'}   //= [];
     # TODO Fix create-new -> create-job or maybe opposite!
     # TODO Check valid values!
     return;
@@ -319,6 +330,10 @@ sub trigger_branch {
             if (exists $job_info{'recipients'} && $overriding_addresses) {
                 $job_info{'recipients'} = $overriding_addresses;
             }
+        }
+        foreach my $var ($git->get_config($CFG => 'job-template-var')) {
+            my ($var_name, $var_value) = split qr/=/msx, $var, 2;
+            $job_info{$var_name} = $var_value;
         }
         my $xml_conf = configure_a_new_job($git, $job_names{$job_name}, %job_info);
         $log->debug('New job: %s', $xml_conf);

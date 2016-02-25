@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+          Small changes to TriggerJenkins.
 
 0.003_001 2015-11-09 15:18:10+01:00 Europe/Stockholm
 
