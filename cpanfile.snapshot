@@ -263,12 +263,6 @@ DISTRIBUTIONS
     provides:
       Devel::GlobalDestruction::XS 0.02
     requirements:
-  Devel-PPPort-3.32
-    pathname: W/WO/WOLFSAGE/Devel-PPPort-3.32.tar.gz
-    provides:
-      Devel::PPPort 3.32
-    requirements:
-      ExtUtils::MakeMaker 0
   Devel-StackTrace-2.00
     pathname: D/DR/DROLSKY/Devel-StackTrace-2.00.tar.gz
     provides:
@@ -348,14 +342,6 @@ DISTRIBUTIONS
       perl 5.008001
       strict 0
       warnings 0
-  Exporter-5.72
-    pathname: T/TO/TODDR/Exporter-5.72.tar.gz
-    provides:
-      Exporter 5.72
-      Exporter::Heavy 5.70
-    requirements:
-      Carp 1.05
-      ExtUtils::MakeMaker 0
   Exporter-Tiny-0.042
     pathname: T/TO/TOBYINK/Exporter-Tiny-0.042.tar.gz
     provides:
@@ -418,24 +404,6 @@ DISTRIBUTIONS
       Text::ParseWords 3.24
       strict 0
       warnings 0
-  ExtUtils-Install-2.04
-    pathname: B/BI/BINGOS/ExtUtils-Install-2.04.tar.gz
-    provides:
-      ExtUtils::Install 2.04
-      ExtUtils::Install::Warn 2.04
-      ExtUtils::Installed 2.04
-      ExtUtils::Packlist 2.04
-    requirements:
-      Carp 0
-      Cwd 0
-      ExtUtils::MakeMaker 0
-      File::Basename 0
-      File::Compare 0
-      File::Copy 0
-      File::Find 0
-      File::Path 0
-      File::Spec 0
-      File::Temp 0
   ExtUtils-InstallPaths-0.011
     pathname: L/LE/LEONT/ExtUtils-InstallPaths-0.011.tar.gz
     provides:
@@ -555,17 +523,6 @@ DISTRIBUTIONS
       ExtUtils::MakeMaker 0
       HTTP::Date 6
       perl 5.006002
-  File-Path-2.12
-    pathname: R/RI/RICHE/File-Path-2.12.tar.gz
-    provides:
-      File::Path 2.12
-    requirements:
-      Carp 0
-      Cwd 0
-      ExtUtils::MakeMaker 0
-      File::Basename 0
-      File::Spec 0
-      SelectSaver 0
   File-Remove-1.52
     pathname: A/AD/ADAMK/File-Remove-1.52.tar.gz
     provides:
@@ -611,30 +568,6 @@ DISTRIBUTIONS
       perl 5.006
       strict 0
       warnings 0
-  File-Temp-0.2304
-    pathname: D/DA/DAGOLDEN/File-Temp-0.2304.tar.gz
-    provides:
-      File::Temp 0.2304
-      File::Temp::Dir 0.2304
-    requirements:
-      Carp 0
-      Carp::Heavy 0
-      Cwd 0
-      Exporter 5.57
-      ExtUtils::MakeMaker 6.17
-      Fcntl 1.03
-      File::Path 2.06
-      File::Spec 0.8
-      IO::Handle 0
-      IO::Seekable 0
-      POSIX 0
-      Scalar::Util 0
-      Symbol 0
-      constant 0
-      overload 0
-      parent 0.221
-      strict 0
-      vars 0
   File-Which-1.19
     pathname: P/PL/PLICEASE/File-Which-1.19.tar.gz
     provides:
@@ -906,7 +839,6 @@ DISTRIBUTIONS
       IO::Socket::SSL::Utils 2.014
     requirements:
       ExtUtils::MakeMaker 0
-      Mozilla::CA 0
       Net::SSLeay 1.46
       Scalar::Util 0
   IO-String-1.08
@@ -1930,53 +1862,6 @@ DISTRIBUTIONS
       Mixin::Linewise::Readers 0.102
       strict 0
       warnings 0
-  Pod-Simple-3.32
-    pathname: M/MA/MARCGREEN/Pod-Simple-3.32.tar.gz
-    provides:
-      Pod::Simple 3.32
-      Pod::Simple::BlackBox 3.32
-      Pod::Simple::Checker 3.32
-      Pod::Simple::Debug 3.32
-      Pod::Simple::DumpAsText 3.32
-      Pod::Simple::DumpAsXML 3.32
-      Pod::Simple::HTML 3.32
-      Pod::Simple::HTMLBatch 3.32
-      Pod::Simple::HTMLLegacy 5.01
-      Pod::Simple::LinkSection 3.32
-      Pod::Simple::Methody 3.32
-      Pod::Simple::Progress 3.32
-      Pod::Simple::PullParser 3.32
-      Pod::Simple::PullParserEndToken 3.32
-      Pod::Simple::PullParserStartToken 3.32
-      Pod::Simple::PullParserTextToken 3.32
-      Pod::Simple::PullParserToken 3.32
-      Pod::Simple::RTF 3.32
-      Pod::Simple::Search 3.32
-      Pod::Simple::SimpleTree 3.32
-      Pod::Simple::Text 3.32
-      Pod::Simple::TextContent 3.32
-      Pod::Simple::TiedOutFH 3.32
-      Pod::Simple::Transcode 3.32
-      Pod::Simple::TranscodeDumb 3.32
-      Pod::Simple::TranscodeSmart 3.32
-      Pod::Simple::XHTML 3.32
-      Pod::Simple::XMLOutStream 3.32
-    requirements:
-      Carp 0
-      Config 0
-      Cwd 0
-      ExtUtils::MakeMaker 0
-      File::Basename 0
-      File::Find 0
-      File::Spec 0
-      Pod::Escapes 1.04
-      Symbol 0
-      Test 1.25
-      Test::More 0
-      Text::Wrap 98.112902
-      integer 0
-      overload 0
-      strict 0
   Pod-Spell-1.17
     pathname: X/XE/XENO/Pod-Spell-1.17.tar.gz
     provides:
@@ -2030,16 +1915,6 @@ DISTRIBUTIONS
     requirements:
       Exporter 5.57
       perl 5.006
-  Scalar-List-Utils-1.42
-    pathname: P/PE/PEVANS/Scalar-List-Utils-1.42.tar.gz
-    provides:
-      List::Util 1.42
-      List::Util::XS 1.42
-      Scalar::Util 1.42
-      Sub::Util 1.42
-    requirements:
-      ExtUtils::MakeMaker 0
-      Test::More 0
   Scope-Guard-0.21
     pathname: C/CH/CHOCOLATE/Scope-Guard-0.21.tar.gz
     provides:
@@ -2675,28 +2550,6 @@ DISTRIBUTIONS
       URI::Escape 0
       WWW::RobotRules 6
       perl 5.008001
-  parent-0.234
-    pathname: C/CO/CORION/parent-0.234.tar.gz
-    provides:
-      parent 0.234
-    requirements:
-      ExtUtils::MakeMaker 0
-      Test::More 0.4
-  podlators-2.5.3
-    pathname: R/RR/RRA/podlators-2.5.3.tar.gz
-    provides:
-      Pod undef
-      Pod::Man 2.28
-      Pod::ParseLink 1.10
-      Pod::Text 3.18
-      Pod::Text::Color 2.07
-      Pod::Text::Overstrike 2.05
-      Pod::Text::Termcap 2.08
-    requirements:
-      Encode 0
-      ExtUtils::MakeMaker 0
-      File::Spec 0.8
-      Pod::Simple 3.06
   version-0.9912
     pathname: J/JP/JPEACOCK/version-0.9912.tar.gz
     provides:
