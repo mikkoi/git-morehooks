@@ -64,7 +64,7 @@ option:
 
     git config --add githooks.plugin Git::MoreHooks::TriggerJenkins
 
-=head REQUIREMENTS
+=head1 REQUIREMENTS
 
 Required additional dependencies:
 
