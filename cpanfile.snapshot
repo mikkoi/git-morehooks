@@ -21,10 +21,10 @@ DISTRIBUTIONS
       ExtUtils::MakeMaker 0
       Test::More 0
       perl 5.008008
-  B-Keywords-1.14
-    pathname: R/RU/RURBAN/B-Keywords-1.14.tar.gz
+  B-Keywords-1.15
+    pathname: R/RU/RURBAN/B-Keywords-1.15.tar.gz
     provides:
-      B::Keywords 1.14
+      B::Keywords 1.15
     requirements:
       B 0
       ExtUtils::MakeMaker 0
@@ -51,10 +51,10 @@ DISTRIBUTIONS
       strict 0
       version 0.88
       warnings 0
-  CPAN-Meta-Requirements-2.133
-    pathname: D/DA/DAGOLDEN/CPAN-Meta-Requirements-2.133.tar.gz
+  CPAN-Meta-Requirements-2.140
+    pathname: D/DA/DAGOLDEN/CPAN-Meta-Requirements-2.140.tar.gz
     provides:
-      CPAN::Meta::Requirements 2.133
+      CPAN::Meta::Requirements 2.140
     requirements:
       B 0
       Carp 0
@@ -63,10 +63,10 @@ DISTRIBUTIONS
       strict 0
       version 0.88
       warnings 0
-  CPAN-Meta-YAML-0.016
-    pathname: D/DA/DAGOLDEN/CPAN-Meta-YAML-0.016.tar.gz
+  CPAN-Meta-YAML-0.018
+    pathname: D/DA/DAGOLDEN/CPAN-Meta-YAML-0.018.tar.gz
     provides:
-      CPAN::Meta::YAML 0.016
+      CPAN::Meta::YAML 0.018
     requirements:
       B 0
       Carp 0
@@ -77,10 +77,10 @@ DISTRIBUTIONS
       perl 5.008001
       strict 0
       warnings 0
-  Capture-Tiny-0.30
-    pathname: D/DA/DAGOLDEN/Capture-Tiny-0.30.tar.gz
+  Capture-Tiny-0.34
+    pathname: D/DA/DAGOLDEN/Capture-Tiny-0.34.tar.gz
     provides:
-      Capture::Tiny 0.30
+      Capture::Tiny 0.34
     requirements:
       Carp 0
       Exporter 0
@@ -232,22 +232,6 @@ DISTRIBUTIONS
       Sub::Install 0.921
       strict 0
       warnings 0
-  Data-Util-0.63
-    pathname: G/GF/GFUJI/Data-Util-0.63.tar.gz
-    provides:
-      Data::Util 0.63
-      Data::Util::Error undef
-      Data::Util::PurePerl undef
-    requirements:
-      Devel::PPPort 3.19
-      ExtUtils::MakeMaker 6.59
-      ExtUtils::ParseXS 3.18
-      Hash::Util::FieldHash::Compat 0
-      Scope::Guard 0
-      Test::Exception 0.27
-      Test::More 0.62
-      XSLoader 0.02
-      perl 5.008001
   Devel-GlobalDestruction-0.13
     pathname: H/HA/HAARG/Devel-GlobalDestruction-0.13.tar.gz
     provides:
@@ -327,11 +311,11 @@ DISTRIBUTIONS
       perl v5.6.0
       strict 0
       warnings 0
-  Exception-Class-1.39
-    pathname: D/DR/DROLSKY/Exception-Class-1.39.tar.gz
+  Exception-Class-1.40
+    pathname: D/DR/DROLSKY/Exception-Class-1.40.tar.gz
     provides:
-      Exception::Class 1.39
-      Exception::Class::Base 1.39
+      Exception::Class 1.40
+      Exception::Class::Base 1.40
     requirements:
       Class::Data::Inheritable 0.02
       Devel::StackTrace 2.00
@@ -523,16 +507,21 @@ DISTRIBUTIONS
       ExtUtils::MakeMaker 0
       HTTP::Date 6
       perl 5.006002
-  File-Remove-1.52
-    pathname: A/AD/ADAMK/File-Remove-1.52.tar.gz
+  File-Remove-1.55
+    pathname: S/SH/SHLOMIF/File-Remove-1.55.tar.gz
     provides:
-      File::Remove 1.52
+      File::Remove 1.55
     requirements:
       Cwd 3.29
-      ExtUtils::MakeMaker 6.36
+      ExtUtils::MakeMaker 0
+      File::Glob 0
+      File::Path 0
       File::Spec 3.29
-      Test::More 0.42
-      perl 5.00503
+      Module::Build 0.28
+      constant 0
+      perl 5.006
+      strict 0
+      vars 0
   File-ShareDir-1.102
     pathname: R/RE/REHSACK/File-ShareDir-1.102.tar.gz
     provides:
@@ -602,24 +591,23 @@ DISTRIBUTIONS
       IPC::Open2 0
       Time::Local 0
       perl 5.008
-  Git-Hooks-1.12.0
-    pathname: G/GN/GNUSTAVO/Git-Hooks-1.12.0.tar.gz
+  Git-Hooks-1.12.3
+    pathname: G/GN/GNUSTAVO/Git-Hooks-1.12.3.tar.gz
     provides:
-      Git::Hooks v1.12.0
-      Git::Hooks::CheckAcls v1.12.0
-      Git::Hooks::CheckCommit v1.12.0
-      Git::Hooks::CheckFile v1.12.0
-      Git::Hooks::CheckJira v1.12.0
-      Git::Hooks::CheckLog v1.12.0
-      Git::Hooks::CheckRewrite v1.12.0
-      Git::Hooks::CheckStructure v1.12.0
-      Git::Hooks::CheckWhitespace v1.12.0
-      Git::Hooks::GerritChangeId v1.12.0
-      Git::More v1.12.0
-      Git::More::Message v1.12.0
+      Git::Hooks v1.12.3
+      Git::Hooks::CheckAcls v1.12.3
+      Git::Hooks::CheckCommit v1.12.3
+      Git::Hooks::CheckFile v1.12.3
+      Git::Hooks::CheckJira v1.12.3
+      Git::Hooks::CheckLog v1.12.3
+      Git::Hooks::CheckRewrite v1.12.3
+      Git::Hooks::CheckStructure v1.12.3
+      Git::Hooks::CheckWhitespace v1.12.3
+      Git::Hooks::GerritChangeId v1.12.3
+      Git::More v1.12.3
+      Git::More::Message v1.12.3
     requirements:
       Carp 0
-      Data::Util 0
       Email::Valid 0
       Encode 0
       Error 0
@@ -628,6 +616,7 @@ DISTRIBUTIONS
       Git 0
       List::MoreUtils 0
       Path::Tiny 0
+      Sub::Util 0
       Text::Glob 0
       URI::Escape 0
       parent 0
@@ -652,14 +641,14 @@ DISTRIBUTIONS
       perl 5.010000
       strict 0
       warnings 0
-  HTML-Parser-3.71
-    pathname: G/GA/GAAS/HTML-Parser-3.71.tar.gz
+  HTML-Parser-3.72
+    pathname: G/GA/GAAS/HTML-Parser-3.72.tar.gz
     provides:
       HTML::Entities 3.69
-      HTML::Filter 3.57
+      HTML::Filter 3.72
       HTML::HeadParser 3.71
       HTML::LinkExtor 3.69
-      HTML::Parser 3.71
+      HTML::Parser 3.72
       HTML::PullParser 3.57
       HTML::TokeParser 3.69
     requirements:
@@ -749,21 +738,6 @@ DISTRIBUTIONS
       ExtUtils::MakeMaker 0
       HTTP::Headers 6
       perl 5.008001
-  Hash-Util-FieldHash-Compat-0.10
-    pathname: E/ET/ETHER/Hash-Util-FieldHash-Compat-0.10.tar.gz
-    provides:
-      Hash::Util::FieldHash::Compat 0.10
-      Hash::Util::FieldHash::Compat::Heavy 0.10
-    requirements:
-      CPAN::Meta::Requirements 2.120620
-      Exporter 0
-      ExtUtils::MakeMaker 0
-      Module::Metadata 0
-      constant 0
-      parent 0
-      perl 5.006
-      strict 0
-      warnings 0
   Hook-LexWrap-0.25
     pathname: E/ET/ETHER/Hook-LexWrap-0.25.tar.gz
     provides:
@@ -825,20 +799,21 @@ DISTRIBUTIONS
       Encode 2.10
       Exporter 5.57
       ExtUtils::MakeMaker 6.30
-  IO-Socket-SSL-2.020
-    pathname: S/SU/SULLR/IO-Socket-SSL-2.020.tar.gz
+  IO-Socket-SSL-2.024
+    pathname: S/SU/SULLR/IO-Socket-SSL-2.024.tar.gz
     provides:
-      IO::Socket::SSL 2.020
+      IO::Socket::SSL 2.024
       IO::Socket::SSL::Intercept 2.014
-      IO::Socket::SSL::OCSP_Cache 2.020
-      IO::Socket::SSL::OCSP_Resolver 2.020
+      IO::Socket::SSL::OCSP_Cache 2.024
+      IO::Socket::SSL::OCSP_Resolver 2.024
       IO::Socket::SSL::PublicSuffix undef
-      IO::Socket::SSL::SSL_Context 2.020
-      IO::Socket::SSL::SSL_HANDLE 2.020
-      IO::Socket::SSL::Session_Cache 2.020
+      IO::Socket::SSL::SSL_Context 2.024
+      IO::Socket::SSL::SSL_HANDLE 2.024
+      IO::Socket::SSL::Session_Cache 2.024
       IO::Socket::SSL::Utils 2.014
     requirements:
       ExtUtils::MakeMaker 0
+      Mozilla::CA 0
       Net::SSLeay 1.46
       Scalar::Util 0
   IO-String-1.08
@@ -921,22 +896,22 @@ DISTRIBUTIONS
       IPC::Cmd 0
       XSLoader 0
       base 0
-  Log-Any-1.032
-    pathname: D/DA/DAGOLDEN/Log-Any-1.032.tar.gz
+  Log-Any-1.040
+    pathname: D/DA/DAGOLDEN/Log-Any-1.040.tar.gz
     provides:
-      Log::Any 1.032
-      Log::Any::Adapter 1.032
-      Log::Any::Adapter::Base 1.032
-      Log::Any::Adapter::File 1.032
-      Log::Any::Adapter::Null 1.032
-      Log::Any::Adapter::Stderr 1.032
-      Log::Any::Adapter::Stdout 1.032
-      Log::Any::Adapter::Test 1.032
-      Log::Any::Adapter::Util 1.032
-      Log::Any::Manager 1.032
-      Log::Any::Proxy 1.032
-      Log::Any::Proxy::Test 1.032
-      Log::Any::Test 1.032
+      Log::Any 1.040
+      Log::Any::Adapter 1.040
+      Log::Any::Adapter::Base 1.040
+      Log::Any::Adapter::File 1.040
+      Log::Any::Adapter::Null 1.040
+      Log::Any::Adapter::Stderr 1.040
+      Log::Any::Adapter::Stdout 1.040
+      Log::Any::Adapter::Test 1.040
+      Log::Any::Adapter::Util 1.040
+      Log::Any::Manager 1.040
+      Log::Any::Proxy 1.040
+      Log::Any::Proxy::Test 1.040
+      Log::Any::Test 1.040
     requirements:
       B 0
       Carp 0
@@ -946,7 +921,6 @@ DISTRIBUTIONS
       Fcntl 0
       IO::File 0
       Test::Builder 0
-      base 0
       constant 0
       perl 5.008001
       strict 0
@@ -999,28 +973,28 @@ DISTRIBUTIONS
       perl 5.008001
       strict 0
       warnings 0
-  Module-Build-0.4214
-    pathname: L/LE/LEONT/Module-Build-0.4214.tar.gz
+  Module-Build-0.4216
+    pathname: L/LE/LEONT/Module-Build-0.4216.tar.gz
     provides:
-      Module::Build 0.4214
-      Module::Build::Base 0.4214
-      Module::Build::Compat 0.4214
-      Module::Build::Config 0.4214
-      Module::Build::Cookbook 0.4214
-      Module::Build::Dumper 0.4214
-      Module::Build::Notes 0.4214
-      Module::Build::PPMMaker 0.4214
-      Module::Build::Platform::Default 0.4214
-      Module::Build::Platform::MacOS 0.4214
-      Module::Build::Platform::Unix 0.4214
-      Module::Build::Platform::VMS 0.4214
-      Module::Build::Platform::VOS 0.4214
-      Module::Build::Platform::Windows 0.4214
-      Module::Build::Platform::aix 0.4214
-      Module::Build::Platform::cygwin 0.4214
-      Module::Build::Platform::darwin 0.4214
-      Module::Build::Platform::os2 0.4214
-      Module::Build::PodParser 0.4214
+      Module::Build 0.4216
+      Module::Build::Base 0.4216
+      Module::Build::Compat 0.4216
+      Module::Build::Config 0.4216
+      Module::Build::Cookbook 0.4216
+      Module::Build::Dumper 0.4216
+      Module::Build::Notes 0.4216
+      Module::Build::PPMMaker 0.4216
+      Module::Build::Platform::Default 0.4216
+      Module::Build::Platform::MacOS 0.4216
+      Module::Build::Platform::Unix 0.4216
+      Module::Build::Platform::VMS 0.4216
+      Module::Build::Platform::VOS 0.4216
+      Module::Build::Platform::Windows 0.4216
+      Module::Build::Platform::aix 0.4216
+      Module::Build::Platform::cygwin 0.4216
+      Module::Build::Platform::darwin 0.4216
+      Module::Build::Platform::os2 0.4216
+      Module::Build::PodParser 0.4216
     requirements:
       CPAN::Meta 2.142060
       CPAN::Meta::YAML 0.003
@@ -1043,11 +1017,11 @@ DISTRIBUTIONS
       Parse::CPAN::Meta 1.4401
       Perl::OSType 1
       Pod::Man 2.17
-      Test::Harness 3.16
+      TAP::Harness 3.29
       Test::More 0.49
       Text::Abbrev 0
       Text::ParseWords 0
-      perl 5.008000
+      perl 5.006001
       version 0.87
   Module-Build-Tiny-0.039
     pathname: L/LE/LEONT/Module-Build-Tiny-0.039.tar.gz
@@ -1140,10 +1114,10 @@ DISTRIBUTIONS
       Role::Tiny 2
       Scalar::Util 0
       perl 5.006
-  Mozilla-CA-20150826
-    pathname: A/AB/ABH/Mozilla-CA-20150826.tar.gz
+  Mozilla-CA-20160104
+    pathname: A/AB/ABH/Mozilla-CA-20160104.tar.gz
     provides:
-      Mozilla::CA 20150826
+      Mozilla::CA 20160104
     requirements:
       ExtUtils::MakeMaker 0
       Test 0
@@ -1288,68 +1262,69 @@ DISTRIBUTIONS
       Test::Object 0.07
       Test::SubCalls 1.07
       perl 5.006
-  PPIx-Regexp-0.042
-    pathname: W/WY/WYANT/PPIx-Regexp-0.042.tar.gz
+  PPIx-Regexp-0.047
+    pathname: W/WY/WYANT/PPIx-Regexp-0.047.tar.gz
     provides:
-      PPIx::Regexp 0.042
-      PPIx::Regexp::Constant 0.042
-      PPIx::Regexp::Dumper 0.042
-      PPIx::Regexp::Element 0.042
-      PPIx::Regexp::Lexer 0.042
-      PPIx::Regexp::Node 0.042
-      PPIx::Regexp::Node::Range 0.042
-      PPIx::Regexp::Structure 0.042
-      PPIx::Regexp::Structure::Assertion 0.042
-      PPIx::Regexp::Structure::BranchReset 0.042
-      PPIx::Regexp::Structure::Capture 0.042
-      PPIx::Regexp::Structure::CharClass 0.042
-      PPIx::Regexp::Structure::Code 0.042
-      PPIx::Regexp::Structure::Main 0.042
-      PPIx::Regexp::Structure::Modifier 0.042
-      PPIx::Regexp::Structure::NamedCapture 0.042
-      PPIx::Regexp::Structure::Quantifier 0.042
-      PPIx::Regexp::Structure::RegexSet 0.042
-      PPIx::Regexp::Structure::Regexp 0.042
-      PPIx::Regexp::Structure::Replacement 0.042
-      PPIx::Regexp::Structure::Subexpression 0.042
-      PPIx::Regexp::Structure::Switch 0.042
-      PPIx::Regexp::Structure::Unknown 0.042
-      PPIx::Regexp::Support 0.042
-      PPIx::Regexp::Token 0.042
-      PPIx::Regexp::Token::Assertion 0.042
-      PPIx::Regexp::Token::Backreference 0.042
-      PPIx::Regexp::Token::Backtrack 0.042
-      PPIx::Regexp::Token::CharClass 0.042
-      PPIx::Regexp::Token::CharClass::POSIX 0.042
-      PPIx::Regexp::Token::CharClass::POSIX::Unknown 0.042
-      PPIx::Regexp::Token::CharClass::Simple 0.042
-      PPIx::Regexp::Token::Code 0.042
-      PPIx::Regexp::Token::Comment 0.042
-      PPIx::Regexp::Token::Condition 0.042
-      PPIx::Regexp::Token::Control 0.042
-      PPIx::Regexp::Token::Delimiter 0.042
-      PPIx::Regexp::Token::Greediness 0.042
-      PPIx::Regexp::Token::GroupType 0.042
-      PPIx::Regexp::Token::GroupType::Assertion 0.042
-      PPIx::Regexp::Token::GroupType::BranchReset 0.042
-      PPIx::Regexp::Token::GroupType::Code 0.042
-      PPIx::Regexp::Token::GroupType::Modifier 0.042
-      PPIx::Regexp::Token::GroupType::NamedCapture 0.042
-      PPIx::Regexp::Token::GroupType::Subexpression 0.042
-      PPIx::Regexp::Token::GroupType::Switch 0.042
-      PPIx::Regexp::Token::Interpolation 0.042
-      PPIx::Regexp::Token::Literal 0.042
-      PPIx::Regexp::Token::Modifier 0.042
-      PPIx::Regexp::Token::Operator 0.042
-      PPIx::Regexp::Token::Quantifier 0.042
-      PPIx::Regexp::Token::Recursion 0.042
-      PPIx::Regexp::Token::Reference 0.042
-      PPIx::Regexp::Token::Structure 0.042
-      PPIx::Regexp::Token::Unknown 0.042
-      PPIx::Regexp::Token::Unmatched 0.042
-      PPIx::Regexp::Token::Whitespace 0.042
-      PPIx::Regexp::Tokenizer 0.042
-      PPIx::Regexp::Util 0.042
+      PPIx::Regexp 0.047
+      PPIx::Regexp::Constant 0.047
+      PPIx::Regexp::Dumper 0.047
+      PPIx::Regexp::Element 0.047
+      PPIx::Regexp::Lexer 0.047
+      PPIx::Regexp::Node 0.047
+      PPIx::Regexp::Node::Range 0.047
+      PPIx::Regexp::StringTokenizer 0.047
+      PPIx::Regexp::Structure 0.047
+      PPIx::Regexp::Structure::Assertion 0.047
+      PPIx::Regexp::Structure::BranchReset 0.047
+      PPIx::Regexp::Structure::Capture 0.047
+      PPIx::Regexp::Structure::CharClass 0.047
+      PPIx::Regexp::Structure::Code 0.047
+      PPIx::Regexp::Structure::Main 0.047
+      PPIx::Regexp::Structure::Modifier 0.047
+      PPIx::Regexp::Structure::NamedCapture 0.047
+      PPIx::Regexp::Structure::Quantifier 0.047
+      PPIx::Regexp::Structure::RegexSet 0.047
+      PPIx::Regexp::Structure::Regexp 0.047
+      PPIx::Regexp::Structure::Replacement 0.047
+      PPIx::Regexp::Structure::Subexpression 0.047
+      PPIx::Regexp::Structure::Switch 0.047
+      PPIx::Regexp::Structure::Unknown 0.047
+      PPIx::Regexp::Support 0.047
+      PPIx::Regexp::Token 0.047
+      PPIx::Regexp::Token::Assertion 0.047
+      PPIx::Regexp::Token::Backreference 0.047
+      PPIx::Regexp::Token::Backtrack 0.047
+      PPIx::Regexp::Token::CharClass 0.047
+      PPIx::Regexp::Token::CharClass::POSIX 0.047
+      PPIx::Regexp::Token::CharClass::POSIX::Unknown 0.047
+      PPIx::Regexp::Token::CharClass::Simple 0.047
+      PPIx::Regexp::Token::Code 0.047
+      PPIx::Regexp::Token::Comment 0.047
+      PPIx::Regexp::Token::Condition 0.047
+      PPIx::Regexp::Token::Control 0.047
+      PPIx::Regexp::Token::Delimiter 0.047
+      PPIx::Regexp::Token::Greediness 0.047
+      PPIx::Regexp::Token::GroupType 0.047
+      PPIx::Regexp::Token::GroupType::Assertion 0.047
+      PPIx::Regexp::Token::GroupType::BranchReset 0.047
+      PPIx::Regexp::Token::GroupType::Code 0.047
+      PPIx::Regexp::Token::GroupType::Modifier 0.047
+      PPIx::Regexp::Token::GroupType::NamedCapture 0.047
+      PPIx::Regexp::Token::GroupType::Subexpression 0.047
+      PPIx::Regexp::Token::GroupType::Switch 0.047
+      PPIx::Regexp::Token::Interpolation 0.047
+      PPIx::Regexp::Token::Literal 0.047
+      PPIx::Regexp::Token::Modifier 0.047
+      PPIx::Regexp::Token::Operator 0.047
+      PPIx::Regexp::Token::Quantifier 0.047
+      PPIx::Regexp::Token::Recursion 0.047
+      PPIx::Regexp::Token::Reference 0.047
+      PPIx::Regexp::Token::Structure 0.047
+      PPIx::Regexp::Token::Unknown 0.047
+      PPIx::Regexp::Token::Unmatched 0.047
+      PPIx::Regexp::Token::Whitespace 0.047
+      PPIx::Regexp::Tokenizer 0.047
+      PPIx::Regexp::Util 0.047
     requirements:
       List::MoreUtils 0
       List::Util 0
@@ -1392,17 +1367,18 @@ DISTRIBUTIONS
       Scalar::Util 1.18
       Test::More 0.42
       perl 5.00503
-  Params-Validate-1.21
-    pathname: D/DR/DROLSKY/Params-Validate-1.21.tar.gz
+  Params-Validate-1.22
+    pathname: D/DR/DROLSKY/Params-Validate-1.22.tar.gz
     provides:
-      Params::Validate 1.21
-      Params::Validate::Constants 1.21
-      Params::Validate::PP 1.21
-      Params::Validate::XS 1.21
+      Params::Validate 1.22
+      Params::Validate::Constants 1.22
+      Params::Validate::PP 1.22
+      Params::Validate::XS 1.22
     requirements:
       Carp 0
       Exporter 0
       ExtUtils::CBuilder 0
+      JSON::PP 2.27300
       Module::Build 0.28
       Module::Implementation 0
       Scalar::Util 1.10
@@ -1486,11 +1462,11 @@ DISTRIBUTIONS
       strict 0
       utf8 0
       warnings 0
-  Path-Tiny-0.072
-    pathname: D/DA/DAGOLDEN/Path-Tiny-0.072.tar.gz
+  Path-Tiny-0.076
+    pathname: D/DA/DAGOLDEN/Path-Tiny-0.076.tar.gz
     provides:
-      Path::Tiny 0.072
-      Path::Tiny::Error 0.072
+      Path::Tiny 0.076
+      Path::Tiny::Error 0.076
     requirements:
       Carp 0
       Cwd 0
@@ -1511,25 +1487,27 @@ DISTRIBUTIONS
       perl 5.008001
       strict 0
       warnings 0
-  PathTools-3.47
-    pathname: S/SM/SMUELLER/PathTools-3.47.tar.gz
+  PathTools-3.62
+    pathname: R/RJ/RJBS/PathTools-3.62.tar.gz
     provides:
-      Cwd 3.47
-      File::Spec 3.47
-      File::Spec::Cygwin 3.47
-      File::Spec::Epoc 3.47
-      File::Spec::Functions 3.47
-      File::Spec::Mac 3.47
-      File::Spec::OS2 3.47
-      File::Spec::Unix 3.47
-      File::Spec::VMS 3.47
-      File::Spec::Win32 3.47
+      Cwd 3.62
+      File::Spec 3.62
+      File::Spec::AmigaOS 3.62
+      File::Spec::Cygwin 3.62
+      File::Spec::Epoc 3.62
+      File::Spec::Functions 3.62
+      File::Spec::Mac 3.62
+      File::Spec::OS2 3.62
+      File::Spec::Unix 3.62
+      File::Spec::VMS 3.62
+      File::Spec::Win32 3.62
     requirements:
       Carp 0
       ExtUtils::MakeMaker 0
       File::Basename 0
       Scalar::Util 0
       Test 0
+      Test::More 0.88
   Perl-Critic-1.126
     pathname: T/TH/THALJEF/Perl-Critic-1.126.tar.gz
     provides:
@@ -1862,11 +1840,11 @@ DISTRIBUTIONS
       Mixin::Linewise::Readers 0.102
       strict 0
       warnings 0
-  Pod-Spell-1.17
-    pathname: X/XE/XENO/Pod-Spell-1.17.tar.gz
+  Pod-Spell-1.19
+    pathname: D/DO/DOLMEN/Pod-Spell-1.19.tar.gz
     provides:
-      Pod::Spell 1.17
-      Pod::Wordlist 1.17
+      Pod::Spell 1.19
+      Pod::Wordlist 1.19
     requirements:
       Carp 0
       Class::Tiny 0
@@ -1874,12 +1852,13 @@ DISTRIBUTIONS
       File::ShareDir::Install 0.06
       File::ShareDir::ProjectDistDir 1.000
       Lingua::EN::Inflect 0
+      POSIX 0
       Pod::Escapes 0
       Pod::Parser 0
       Text::Wrap 0
-      base 0
       constant 0
       locale 0
+      parent 0
       perl 5.008
       strict 0
       warnings 0
@@ -1894,18 +1873,15 @@ DISTRIBUTIONS
       Test::More 0.8
       URI 0
       perl 5.008
-  Readonly-2.00
-    pathname: S/SA/SANKO/Readonly-2.00.tar.gz
+  Readonly-2.01
+    pathname: S/SA/SANKO/Readonly-2.01.tar.gz
     provides:
-      Readonly 2.00
+      Readonly 2.01
       Readonly::Array undef
       Readonly::Hash undef
       Readonly::Scalar undef
     requirements:
-      CPAN::Meta 0
-      CPAN::Meta::Prereqs 0
-      ExtUtils::CBuilder 0
-      Module::Build 0.38
+      Module::Build::Tiny 0.035
       perl v5.6.0
   Role-Tiny-2.000001
     pathname: H/HA/HAARG/Role-Tiny-2.000001.tar.gz
@@ -1915,14 +1891,17 @@ DISTRIBUTIONS
     requirements:
       Exporter 5.57
       perl 5.006
-  Scope-Guard-0.21
-    pathname: C/CH/CHOCOLATE/Scope-Guard-0.21.tar.gz
+  Scalar-List-Utils-1.43
+    pathname: P/PE/PEVANS/Scalar-List-Utils-1.43.tar.gz
     provides:
-      Scope::Guard 0.21
+      List::Util 1.43
+      List::Util::XS 1.43
+      Scalar::Util 1.43
+      Sub::Util 1.43
     requirements:
       ExtUtils::MakeMaker 0
       Test::More 0
-      perl 5.006001
+      perl 5.006
   String-Format-1.17
     pathname: D/DA/DARREN/String-Format-1.17.tar.gz
     provides:
@@ -2043,12 +2022,12 @@ DISTRIBUTIONS
       File::Temp 0.12
       Scalar::Util 0
       Test::LeakTrace 0
-  Term-ANSIColor-4.03
-    pathname: R/RR/RRA/Term-ANSIColor-4.03.tar.gz
+  Term-ANSIColor-4.04
+    pathname: R/RR/RRA/Term-ANSIColor-4.04.tar.gz
     provides:
-      Term::ANSIColor 4.03
+      Term::ANSIColor 4.04
     requirements:
-      Module::Build 0.28
+      ExtUtils::MakeMaker 0
       perl 5.006
   Test-CPAN-Meta-0.25
     pathname: B/BA/BARBIE/Test-CPAN-Meta-0.25.tar.gz
@@ -2062,10 +2041,10 @@ DISTRIBUTIONS
       Test::Builder 0
       Test::Builder::Tester 0
       Test::More 0.70
-  Test-Deep-0.119
-    pathname: R/RJ/RJBS/Test-Deep-0.119.tar.gz
+  Test-Deep-1.120
+    pathname: R/RJ/RJBS/Test-Deep-1.120.tar.gz
     provides:
-      Test::Deep 0.119
+      Test::Deep 1.120
       Test::Deep::All undef
       Test::Deep::Any undef
       Test::Deep::Array undef
@@ -2091,6 +2070,7 @@ DISTRIBUTIONS
       Test::Deep::MM undef
       Test::Deep::Methods undef
       Test::Deep::NoTest undef
+      Test::Deep::None undef
       Test::Deep::Number undef
       Test::Deep::Obj undef
       Test::Deep::Ref undef
@@ -2120,19 +2100,19 @@ DISTRIBUTIONS
       List::Util 1.09
       Scalar::Util 1.09
       Test::Builder 0
-  Test-Differences-0.63
-    pathname: D/DC/DCANTRELL/Test-Differences-0.63.tar.gz
+  Test-Differences-0.64
+    pathname: D/DC/DCANTRELL/Test-Differences-0.64.tar.gz
     provides:
-      Test::Differences 0.63
+      Test::Differences 0.64
     requirements:
       Capture::Tiny 0.24
       Data::Dumper 2.126
-      Test::More 0
+      Test::More 0.88
       Text::Diff 0.35
-  Test-Exception-0.40
-    pathname: E/EX/EXODIST/Test-Exception-0.40.tar.gz
+  Test-Exception-0.43
+    pathname: E/EX/EXODIST/Test-Exception-0.43.tar.gz
     provides:
-      Test::Exception 0.40
+      Test::Exception 0.43
     requirements:
       Carp 0
       Exporter 0
@@ -2145,58 +2125,58 @@ DISTRIBUTIONS
       perl 5.006001
       strict 0
       warnings 0
-  Test-Harness-3.35
-    pathname: L/LE/LEONT/Test-Harness-3.35.tar.gz
+  Test-Harness-3.36
+    pathname: L/LE/LEONT/Test-Harness-3.36.tar.gz
     provides:
-      App::Prove 3.35
-      App::Prove::State 3.35
-      App::Prove::State::Result 3.35
-      App::Prove::State::Result::Test 3.35
+      App::Prove 3.36
+      App::Prove::State 3.36
+      App::Prove::State::Result 3.36
+      App::Prove::State::Result::Test 3.36
       Harness::Hook undef
-      TAP::Base 3.35
-      TAP::Formatter::Base 3.35
-      TAP::Formatter::Color 3.35
-      TAP::Formatter::Console 3.35
-      TAP::Formatter::Console::ParallelSession 3.35
-      TAP::Formatter::Console::Session 3.35
-      TAP::Formatter::File 3.35
-      TAP::Formatter::File::Session 3.35
-      TAP::Formatter::Session 3.35
-      TAP::Harness 3.35
-      TAP::Harness::Env 3.35
-      TAP::Object 3.35
-      TAP::Parser 3.35
-      TAP::Parser::Aggregator 3.35
-      TAP::Parser::Grammar 3.35
-      TAP::Parser::Iterator 3.35
-      TAP::Parser::Iterator::Array 3.35
-      TAP::Parser::Iterator::Process 3.35
-      TAP::Parser::Iterator::Stream 3.35
-      TAP::Parser::IteratorFactory 3.35
-      TAP::Parser::Multiplexer 3.35
-      TAP::Parser::Result 3.35
-      TAP::Parser::Result::Bailout 3.35
-      TAP::Parser::Result::Comment 3.35
-      TAP::Parser::Result::Plan 3.35
-      TAP::Parser::Result::Pragma 3.35
-      TAP::Parser::Result::Test 3.35
-      TAP::Parser::Result::Unknown 3.35
-      TAP::Parser::Result::Version 3.35
-      TAP::Parser::Result::YAML 3.35
-      TAP::Parser::ResultFactory 3.35
-      TAP::Parser::Scheduler 3.35
-      TAP::Parser::Scheduler::Job 3.35
-      TAP::Parser::Scheduler::Spinner 3.35
-      TAP::Parser::Source 3.35
-      TAP::Parser::SourceHandler 3.35
-      TAP::Parser::SourceHandler::Executable 3.35
-      TAP::Parser::SourceHandler::File 3.35
-      TAP::Parser::SourceHandler::Handle 3.35
-      TAP::Parser::SourceHandler::Perl 3.35
-      TAP::Parser::SourceHandler::RawTAP 3.35
-      TAP::Parser::YAMLish::Reader 3.35
-      TAP::Parser::YAMLish::Writer 3.35
-      Test::Harness 3.35
+      TAP::Base 3.36
+      TAP::Formatter::Base 3.36
+      TAP::Formatter::Color 3.36
+      TAP::Formatter::Console 3.36
+      TAP::Formatter::Console::ParallelSession 3.36
+      TAP::Formatter::Console::Session 3.36
+      TAP::Formatter::File 3.36
+      TAP::Formatter::File::Session 3.36
+      TAP::Formatter::Session 3.36
+      TAP::Harness 3.36
+      TAP::Harness::Env 3.36
+      TAP::Object 3.36
+      TAP::Parser 3.36
+      TAP::Parser::Aggregator 3.36
+      TAP::Parser::Grammar 3.36
+      TAP::Parser::Iterator 3.36
+      TAP::Parser::Iterator::Array 3.36
+      TAP::Parser::Iterator::Process 3.36
+      TAP::Parser::Iterator::Stream 3.36
+      TAP::Parser::IteratorFactory 3.36
+      TAP::Parser::Multiplexer 3.36
+      TAP::Parser::Result 3.36
+      TAP::Parser::Result::Bailout 3.36
+      TAP::Parser::Result::Comment 3.36
+      TAP::Parser::Result::Plan 3.36
+      TAP::Parser::Result::Pragma 3.36
+      TAP::Parser::Result::Test 3.36
+      TAP::Parser::Result::Unknown 3.36
+      TAP::Parser::Result::Version 3.36
+      TAP::Parser::Result::YAML 3.36
+      TAP::Parser::ResultFactory 3.36
+      TAP::Parser::Scheduler 3.36
+      TAP::Parser::Scheduler::Job 3.36
+      TAP::Parser::Scheduler::Spinner 3.36
+      TAP::Parser::Source 3.36
+      TAP::Parser::SourceHandler 3.36
+      TAP::Parser::SourceHandler::Executable 3.36
+      TAP::Parser::SourceHandler::File 3.36
+      TAP::Parser::SourceHandler::Handle 3.36
+      TAP::Parser::SourceHandler::Perl 3.36
+      TAP::Parser::SourceHandler::RawTAP 3.36
+      TAP::Parser::YAMLish::Reader 3.36
+      TAP::Parser::YAMLish::Writer 3.36
+      Test::Harness 3.36
     requirements:
       ExtUtils::MakeMaker 0
   Test-LeakTrace-0.15
@@ -2306,13 +2286,13 @@ DISTRIBUTIONS
       Test::Builder::Tester 1.02
       Test::More 0
       perl 5.006
-  Text-Diff-1.43
-    pathname: N/NE/NEILB/Text-Diff-1.43.tar.gz
+  Text-Diff-1.44
+    pathname: N/NE/NEILB/Text-Diff-1.44.tar.gz
     provides:
-      Text::Diff 1.43
-      Text::Diff::Base 1.43
-      Text::Diff::Config 1.43
-      Text::Diff::Table 1.43
+      Text::Diff 1.44
+      Text::Diff::Base 1.44
+      Text::Diff::Config 1.44
+      Text::Diff::Table 1.44
     requirements:
       Algorithm::Diff 1.19
       Exporter 0
@@ -2367,15 +2347,16 @@ DISTRIBUTIONS
       Time::Zone 2.24
     requirements:
       ExtUtils::MakeMaker 0
-  Try-Tiny-0.22
-    pathname: D/DO/DOY/Try-Tiny-0.22.tar.gz
+  Try-Tiny-0.24
+    pathname: E/ET/ETHER/Try-Tiny-0.24.tar.gz
     provides:
-      Try::Tiny 0.22
+      Try::Tiny 0.24
     requirements:
       Carp 0
       Exporter 5.57
-      ExtUtils::MakeMaker 6.30
+      ExtUtils::MakeMaker 0
       constant 0
+      perl 5.006
       strict 0
       warnings 0
   Type-Tiny-1.000005
@@ -2419,62 +2400,62 @@ DISTRIBUTIONS
       Exporter::Tiny 0.026
       ExtUtils::MakeMaker 6.17
       perl 5.006001
-  URI-1.69
-    pathname: E/ET/ETHER/URI-1.69.tar.gz
+  URI-1.71
+    pathname: E/ET/ETHER/URI-1.71.tar.gz
     provides:
-      URI 1.69
+      URI 1.71
       URI::Escape 3.31
       URI::Heuristic 4.20
-      URI::IRI 1.69
-      URI::QueryParam 1.69
-      URI::Split 1.69
+      URI::IRI 1.71
+      URI::QueryParam 1.71
+      URI::Split 1.71
       URI::URL 5.04
       URI::WithBase 2.20
-      URI::_foreign 1.69
-      URI::_generic 1.69
-      URI::_idna 1.69
-      URI::_ldap 1.69
-      URI::_login 1.69
-      URI::_punycode 1.69
-      URI::_query 1.69
-      URI::_segment 1.69
-      URI::_server 1.69
-      URI::_userpass 1.69
-      URI::data 1.69
+      URI::_foreign 1.71
+      URI::_generic 1.71
+      URI::_idna 1.71
+      URI::_ldap 1.71
+      URI::_login 1.71
+      URI::_punycode 1.71
+      URI::_query 1.71
+      URI::_segment 1.71
+      URI::_server 1.71
+      URI::_userpass 1.71
+      URI::data 1.71
       URI::file 4.21
-      URI::file::Base 1.69
-      URI::file::FAT 1.69
-      URI::file::Mac 1.69
-      URI::file::OS2 1.69
-      URI::file::QNX 1.69
-      URI::file::Unix 1.69
-      URI::file::Win32 1.69
-      URI::ftp 1.69
-      URI::gopher 1.69
-      URI::http 1.69
-      URI::https 1.69
-      URI::ldap 1.69
-      URI::ldapi 1.69
-      URI::ldaps 1.69
-      URI::mailto 1.69
-      URI::mms 1.69
-      URI::news 1.69
-      URI::nntp 1.69
-      URI::pop 1.69
-      URI::rlogin 1.69
-      URI::rsync 1.69
-      URI::rtsp 1.69
-      URI::rtspu 1.69
-      URI::sftp 1.69
-      URI::sip 1.69
-      URI::sips 1.69
-      URI::snews 1.69
-      URI::ssh 1.69
-      URI::telnet 1.69
-      URI::tn3270 1.69
-      URI::urn 1.69
+      URI::file::Base 1.71
+      URI::file::FAT 1.71
+      URI::file::Mac 1.71
+      URI::file::OS2 1.71
+      URI::file::QNX 1.71
+      URI::file::Unix 1.71
+      URI::file::Win32 1.71
+      URI::ftp 1.71
+      URI::gopher 1.71
+      URI::http 1.71
+      URI::https 1.71
+      URI::ldap 1.71
+      URI::ldapi 1.71
+      URI::ldaps 1.71
+      URI::mailto 1.71
+      URI::mms 1.71
+      URI::news 1.71
+      URI::nntp 1.71
+      URI::pop 1.71
+      URI::rlogin 1.71
+      URI::rsync 1.71
+      URI::rtsp 1.71
+      URI::rtspu 1.71
+      URI::sftp 1.71
+      URI::sip 1.71
+      URI::sips 1.71
+      URI::snews 1.71
+      URI::ssh 1.71
+      URI::telnet 1.71
+      URI::tn3270 1.71
+      URI::urn 1.71
       URI::urn::isbn undef
-      URI::urn::oid 1.69
+      URI::urn::oid 1.71
     requirements:
       Exporter 5.57
       ExtUtils::MakeMaker 0
@@ -2495,18 +2476,18 @@ DISTRIBUTIONS
       Fcntl 0
       URI 1.10
       perl 5.008001
-  libwww-perl-6.13
-    pathname: E/ET/ETHER/libwww-perl-6.13.tar.gz
+  libwww-perl-6.15
+    pathname: E/ET/ETHER/libwww-perl-6.15.tar.gz
     provides:
-      LWP 6.13
+      LWP 6.15
       LWP::Authen::Basic undef
       LWP::Authen::Digest undef
-      LWP::Authen::Ntlm 6.13
-      LWP::ConnCache 6.13
+      LWP::Authen::Ntlm 6.15
+      LWP::ConnCache 6.15
       LWP::Debug undef
       LWP::DebugFile undef
       LWP::MemberMixin undef
-      LWP::Protocol 6.13
+      LWP::Protocol 6.15
       LWP::Protocol::GHTTP undef
       LWP::Protocol::MyFTP undef
       LWP::Protocol::cpan undef
@@ -2521,15 +2502,17 @@ DISTRIBUTIONS
       LWP::Protocol::mailto undef
       LWP::Protocol::nntp undef
       LWP::Protocol::nogo undef
-      LWP::RobotUA 6.13
-      LWP::Simple 6.13
-      LWP::UserAgent 6.13
+      LWP::RobotUA 6.15
+      LWP::Simple 6.15
+      LWP::UserAgent 6.15
     requirements:
       Digest::MD5 0
       Encode 2.12
       Encode::Locale 0
       ExtUtils::MakeMaker 0
+      File::Copy 0
       File::Listing 6
+      Getopt::Long 0
       HTML::Entities 0
       HTML::HeadParser 0
       HTTP::Cookies 6
@@ -2550,14 +2533,13 @@ DISTRIBUTIONS
       URI::Escape 0
       WWW::RobotRules 6
       perl 5.008001
-  version-0.9912
-    pathname: J/JP/JPEACOCK/version-0.9912.tar.gz
+  version-0.9914
+    pathname: J/JP/JPEACOCK/version-0.9914.tar.gz
     provides:
-      charstar 0.9912
-      version 0.9912
-      version::regex 0.9912
-      version::vpp 0.9912
-      version::vxs 0.9912
+      version 0.9914
+      version::regex 0.9914
+      version::vpp 0.9914
+      version::vxs 0.9914
     requirements:
       ExtUtils::MakeMaker 6.17
       File::Temp 0.13
