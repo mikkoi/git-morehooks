@@ -104,6 +104,15 @@ the whole path of the file. The file name is not
 a L<File::Glob|File::Glob> pattern (like Git::Hooks::CheckFile uses).
 
 
+=head3 githooks.checkindent.exception REGEXP REGEXP
+
+Sometimes we have to make exceptions. After finding the faulty lines
+ever line is matched agains the exceptions. If a match is found,
+then error is not generated.
+
+The first regular expression is matched against the name of the current file.
+The second is matched against the row on which an error was found.
+
 =head1 EXPORTS
 
 This module exports the following routines that can be used directly
