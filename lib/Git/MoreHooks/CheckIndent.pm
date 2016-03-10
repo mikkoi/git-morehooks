@@ -171,6 +171,7 @@ sub _setup_config {
     # Set default config values.
     my $default = $config->{ lc $CFG };
     $default->{'file'} //= [];
+    $default->{'exception'} //= [];
 
     # Check validity of config items.
     foreach my $file_def ( @{$default->{'file'}} ) {
@@ -189,6 +190,24 @@ sub _setup_config {
           )
         {
             $git->error( $PKG, 'Faulty config item: \'' . $file_def . '\'.' );
+            return 0;
+        }
+    }
+    foreach my $exc_def ( @{$default->{'exception'}} ) {
+        $log->debugf( '_setup_config(): Check for validity, config item: \'%s\'.', $exc_def );
+        if (
+            ## no critic (RegularExpressions::ProhibitComplexRegexes)
+            $exc_def !~ m{^
+            (?:[[:space:]]{0,})   (?# Free spacing before)
+            (?:[[:graph:]]+)      (?# File name pattern)
+            (?:[[:space:]]{1,})   (?# Required spacing)
+            (?:[[:graph:]]+)      (?# Regular expression)
+            (?:[[:space:]]{0,})   (?# Free spacing after)
+            $}msx
+            ## use critic (RegularExpressions::ProhibitComplexRegexes)
+          )
+        {
+            $git->error( $PKG, 'Faulty config item: \'' . $exc_def . '\'.' );
             return 0;
         }
     }
@@ -213,6 +232,10 @@ sub check_for_indent {
                 default => 4,
                 regex   => qr/[[:digit:]]{1,}/msx,
             },
+            exceptions => {
+                type    => ARRAYREF,
+                default => [],
+            },
         },
     );
     my $ic     = $params{'indent_char'};
@@ -227,7 +250,13 @@ sub check_for_indent {
                 $indents !~ m/^[$ic]{1,}$/msx
                 || (($ic ne qq{\t}) && (length $indents) % $params{'indent_size'} != 0)
             ) ) {
-            $errors{$row_nr} = $row;
+            # If there is an exception regexp that matches this row,
+            # then skip logging it as error.
+            if (!map { $row =~ m/$_/msx } @{$params{'exceptions'}}) {
+                $errors{$row_nr} = $row;
+            } else {
+                $log->debugf('Except this row: \'%s\'', $row);
+            }
         }
         $row_nr++;
     }
@@ -282,19 +311,27 @@ sub do_hook {
 sub handle_file {
     my ($git, $filename, $read_file_func_ptr, $commit) = @_;
     $log->tracef( 'handle_file(%s)', (join q{:}, @_) );
-    my @file_defs = $git->get_config("$CFG" => 'file');
+    my @file_defs = $git->get_config($CFG => 'file');
     my %opts;
     my $errors = 0;
     foreach my $file_def (@file_defs) {
         my ($file_regexp, $options) = split q{ }, $file_def, 2;
-        if ( $filename =~ $file_regexp ) {
+        if ( $filename =~ m/$file_regexp/msx ) {
             ($opts{'indent_size'}) = $options =~ m/indent-size:([[:digit:]]+)/msx;
             ($opts{'indent_char'}) = $options =~ m/indent-char:(space|tab|both)/msx;
             my $file_as_string = &{$read_file_func_ptr}($filename, $commit);
+            my %exceptions;
+            foreach my $exc_row ($git->get_config($CFG => 'exception')) {
+                my ($exc_file_regexp, $exc) = split qr{[[:space:]]+}msx, $exc_row;
+                if ($filename =~ m/$exc_file_regexp/msx) {
+                    $exceptions{$exc_file_regexp} = $exc;
+                }
+            }
             my %results = check_for_indent(
                 'file_as_string' => $file_as_string,
                 'indent_char'    => $opts{'indent_char'} eq 'space' ? q{ } : qq{\t},
                 'indent_size'    => $opts{'indent_size'},
+                'exceptions'     => [values %exceptions],
             );
             foreach my $row_nr (keys %results) {
                 $git->error( $PKG, "Indent error ($commit, $filename:$row_nr): '$results{$row_nr}'" );
