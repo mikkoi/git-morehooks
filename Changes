@@ -1,6 +1,9 @@
 Revision history for {{$dist->name}}
 
-{{$NEXT}}
+{{$NEXT}} TriggerJenkins:
+              Fix compatibility with Gitlab.
+          CheckIndent:
+              Parameter 'exceptions' for exceptions on specified files (regexp for both).
 
 0.004     2016-02-29 07:37:32+01:00 Europe/Stockholm
 
