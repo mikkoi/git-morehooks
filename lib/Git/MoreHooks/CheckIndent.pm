@@ -107,7 +107,7 @@ a L<File::Glob|File::Glob> pattern (like Git::Hooks::CheckFile uses).
 =head3 githooks.checkindent.exception REGEXP REGEXP
 
 Sometimes we have to make exceptions. After finding the faulty lines
-ever line is matched agains the exceptions. If a match is found,
+ever line is matched against the exceptions. If a match is found,
 then error is not generated.
 
 The first regular expression is matched against the name of the current file.
