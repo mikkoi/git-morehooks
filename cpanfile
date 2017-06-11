@@ -2,7 +2,7 @@
 requires 'perl', '5.10.1';
 
 requires 'Jenkins::API';
-requires 'Git::Hooks';
+requires 'Git::Hooks', '>= 2.0';
 
 requires 'Git::Mailmap';
 

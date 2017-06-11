@@ -149,7 +149,7 @@ L<Git::Hooks|https://metacpan.org/pod/Git::Hooks> package.
 
 use Git::MoreHooks::CheckCommitBase \&do_hook;
 
-use Git::Hooks qw{:DEFAULT :utils};
+use Git::Hooks;
 use Path::Tiny;
 use Log::Any qw{$log};
 use Params::Validate qw(:all);
@@ -279,7 +279,7 @@ sub do_hook {
     my ($git, $hook_name, $opts) = @_;
     $log->tracef( 'do_hook(%s)', (join q{:}, @_) );
 
-    return 1 if im_admin($git);
+    return 1 if $git->im_admin();
     if ( !_setup_config($git) ) {
         return 0;
     }

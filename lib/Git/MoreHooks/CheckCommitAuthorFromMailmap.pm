@@ -201,7 +201,7 @@ L<Git::Hooks|https://metacpan.org/pod/Git::Hooks> package.
 
 =cut
 
-use Git::Hooks qw{:DEFAULT :utils};
+use Git::Hooks;
 use Path::Tiny;
 use Log::Any qw{$log};
 require Git::Mailmap;
@@ -260,7 +260,7 @@ sub _check_author {
 
     _setup_config($git);
 
-    return 1 if im_admin($git);
+    return 1 if $git->im_admin();
 
     my $errors = 0;
     _check_mailmap( $git, $author_name, $author_email ) or ++$errors;
@@ -274,7 +274,7 @@ sub _check_mailmap {
     my $errors            = 0;
     my $author            = $author_name . q{ } . $author_email;
     my $mailmap           = Git::Mailmap->new();
-    my $mailmap_as_string = $git->command( 'show', 'HEAD:.mailmap' );
+    my $mailmap_as_string = $git->run( 'show', 'HEAD:.mailmap' );
     if ( defined $mailmap_as_string ) {
         $mailmap->from_string( 'mailmap' => $mailmap_as_string );
         $log->debugf( '_check_mailmap(): HEAD:.mailmap read in.' . ' Content from Git::Mailmap:\n%s', $mailmap->to_string() );

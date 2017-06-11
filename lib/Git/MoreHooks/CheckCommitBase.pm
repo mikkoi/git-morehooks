@@ -133,7 +133,7 @@ L<Git::Hooks|https://metacpan.org/pod/Git::Hooks> package.
 
 =cut
 
-use Git::Hooks qw{:DEFAULT :utils};
+use Git::Hooks;
 use Path::Tiny;
 use Log::Any qw{$log};
 use Params::Validate qw(:all);
