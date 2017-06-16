@@ -506,7 +506,7 @@ sub handle_affected_refs {
     }
 
     foreach my $ref ( $git->get_affected_refs() ) {
-        if ( !is_ref_enabled( $ref, $git->get_config( $CFG => 'ref' ) ) ) {
+        if ( ! $git->is_ref_enabled( $ref, $git->get_config( $CFG => 'ref' ) ) ) {
             if ( $git->get_config( $CFG => 'quiet' ) eq '0' ) {
                 print "Ref '$ref' not enabled.\n";
             }
@@ -555,7 +555,7 @@ sub handle_commit_at_client {
     my ($git) = @_;
 
     my $current_branch = $git->get_current_branch();
-    if ( !is_ref_enabled( $current_branch, $git->get_config( $CFG => 'ref' ) ) ) {
+    if ( ! $git->is_ref_enabled( $current_branch, $git->get_config( $CFG => 'ref' ) ) ) {
         if ( $git->get_config( $CFG => 'quiet' ) eq '0' ) {
             print "Ref '$current_branch' not enabled.\n";
         }
