@@ -201,7 +201,7 @@ L<Git::Hooks|https://metacpan.org/pod/Git::Hooks> package.
 
 =cut
 
-use Git::Hooks qw{:DEFAULT :utils};
+use Git::Hooks;
 use Path::Tiny;
 use Log::Any qw{$log};
 require Git::Mailmap;
@@ -238,7 +238,7 @@ sub check_commit_at_client {
     my ($git) = @_;
 
     my $current_branch = $git->get_current_branch();
-    return 1 unless is_ref_enabled( $current_branch, $git->get_config( $CFG => 'ref' ) );
+    return 1 unless $git->is_ref_enabled( $current_branch, $git->get_config( $CFG => 'ref' ) );
 
     my $author_name  = $ENV{'GIT_AUTHOR_NAME'};
     my $author_email = '<' . $ENV{'GIT_AUTHOR_EMAIL'} . '>';
@@ -260,7 +260,7 @@ sub _check_author {
 
     _setup_config($git);
 
-    return 1 if im_admin($git);
+    return 1 if $git->im_admin();
 
     my $errors = 0;
     _check_mailmap( $git, $author_name, $author_email ) or ++$errors;
@@ -274,7 +274,7 @@ sub _check_mailmap {
     my $errors            = 0;
     my $author            = $author_name . q{ } . $author_email;
     my $mailmap           = Git::Mailmap->new();
-    my $mailmap_as_string = $git->command( 'show', 'HEAD:.mailmap' );
+    my $mailmap_as_string = $git->run( 'show', 'HEAD:.mailmap' );
     if ( defined $mailmap_as_string ) {
         $mailmap->from_string( 'mailmap' => $mailmap_as_string );
         $log->debugf( '_check_mailmap(): HEAD:.mailmap read in.' . ' Content from Git::Mailmap:\n%s', $mailmap->to_string() );
@@ -340,7 +340,7 @@ sub _check_mailmap {
 sub check_ref {
     my ( $git, $ref ) = @_;
 
-    return 1 unless is_ref_enabled( $ref, $git->get_config( $CFG => 'ref' ) );
+    return 1 unless $git->is_ref_enabled( $ref, $git->get_config( $CFG => 'ref' ) );
 
     my $errors = 0;
     foreach my $commit ( $git->get_affected_ref_commits($ref) ) {
@@ -380,7 +380,7 @@ sub check_patchset {
     my $branch = $opts->{'--branch'};
     $branch = "refs/heads/$branch"
       unless $branch =~ m:^refs/:;
-    return 1 unless is_ref_enabled( $branch, $git->get_config( $CFG => 'ref' ) );
+    return 1 unless $git->is_ref_enabled( $branch, $git->get_config( $CFG => 'ref' ) );
 
     return check_commit_at_server( $git, $commit );
 }

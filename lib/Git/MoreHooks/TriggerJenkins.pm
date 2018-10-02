@@ -222,7 +222,7 @@ Cxense Sweden AB's permission.
 
 =cut
 
-use Git::Hooks qw{:DEFAULT :utils};
+use Git::Hooks;
 use Path::Tiny;
 use Log::Any qw{$log};
 use Carp;
@@ -506,7 +506,7 @@ sub handle_affected_refs {
     }
 
     foreach my $ref ( $git->get_affected_refs() ) {
-        if ( !is_ref_enabled( $ref, $git->get_config( $CFG => 'ref' ) ) ) {
+        if ( ! $git->is_ref_enabled( $ref, $git->get_config( $CFG => 'ref' ) ) ) {
             if ( $git->get_config( $CFG => 'quiet' ) eq '0' ) {
                 print "Ref '$ref' not enabled.\n";
             }
@@ -514,15 +514,16 @@ sub handle_affected_refs {
         }
 
         my $new_commit = ( $git->get_affected_ref_range($ref) )[1];
-        if ( $new_commit =~ m/^[0]{1,}$/msx ) {    # Just zeros, deleted branch.
+        if ( $new_commit eq $git->undef_commit() ) {    # Just zeros, deleted branch.
             delete_job( $git, $ref );
         }
         else {
-            my @commit_ids = $git->get_affected_ref_commit_ids($ref);
-            $log->debugf( 'commit_ids (from get_affected_ref_commit_ids(%s):%s', $ref, \@commit_ids );
+            my @commits = $git->get_affected_ref_commits($ref);
+            $log->debugf( 'commit_ids (from get_affected_ref_commit_ids(%s):%s', $ref,
+                          [map {$_->commit()} @commits] );
             my $nr_msg_ok_to_trigger = 0;
-            foreach my $commit_id (@commit_ids) {
-                my $commit_msg = $git->get_commit_msg($commit_id);
+            foreach my $commit (@commits) {
+                my $commit_msg = $commit->message();
                 $log->debugf( 'commit message: \'%s\'.', ( substr $commit_msg, 0, $LAST_CHAR_IN_STRING ) );
                 if ( !$git->get_config( $CFG => 'allow-commit-msg' ) ) {
                     $log->debugf('No option allow-commit-msg. Allow all.');
@@ -554,7 +555,7 @@ sub handle_commit_at_client {
     my ($git) = @_;
 
     my $current_branch = $git->get_current_branch();
-    if ( !is_ref_enabled( $current_branch, $git->get_config( $CFG => 'ref' ) ) ) {
+    if ( ! $git->is_ref_enabled( $current_branch, $git->get_config( $CFG => 'ref' ) ) ) {
         if ( $git->get_config( $CFG => 'quiet' ) eq '0' ) {
             print "Ref '$current_branch' not enabled.\n";
         }
