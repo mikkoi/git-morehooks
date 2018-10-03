@@ -208,7 +208,7 @@ C<Git::More> object for parameter.
 
 =item This script is heavily inspired (and sometimes derived) from
 Gustavo Chaves'
-L< Git::Hooks::CheckJira|https://metacpan.org/pod/Git::Hooks::CheckJira>.
+L<Git::Hooks::CheckJira|https://metacpan.org/pod/Git::Hooks::CheckJira>.
 
 =back
 
