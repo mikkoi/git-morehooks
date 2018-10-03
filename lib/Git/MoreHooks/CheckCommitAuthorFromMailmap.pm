@@ -199,6 +199,18 @@ arguments passed to the hook by Gerrit.
 Thanks go to Gustavo Leite de Mendonça Chaves for his
 L<Git::Hooks|https://metacpan.org/pod/Git::Hooks> package.
 
+=head1 BUGS AND LIMITATIONS
+
+The hook reads the file F<HEAD:.mailmap> with git command C<show>.
+This is clearly the wrong approach for several reasons.
+Firstly, C<git-show> is a 
+L<porcelain|https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git.html>
+command, not a plumbing command.
+Secondly, C<git-show> fails with an error if there is no commits in the repository.
+Thirdly, C<git-show> only shows committed files.
+In the B<pre-commit> hook we want to read a file in the working directory.
+
+
 =cut
 
 use Git::Hooks;
@@ -209,10 +221,6 @@ require Git::Mailmap;
 my $PKG = __PACKAGE__;
 my ($CFG) = __PACKAGE__ =~ /::([^:]+)$/msx;
 $CFG = 'githooks.' . $CFG;
-
-=head1 SUBROUTINES/METHODS
-
-=cut
 
 #############
 # Grok hook configuration, check it and set defaults.
