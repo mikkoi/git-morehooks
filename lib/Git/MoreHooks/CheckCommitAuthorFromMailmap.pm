@@ -365,7 +365,7 @@ sub check_affected_refs {
 
     _setup_config($git);
 
-    return 1 if im_admin($git);
+    return 1 if $git->im_admin($git);
 
     my $errors = 0;
 
