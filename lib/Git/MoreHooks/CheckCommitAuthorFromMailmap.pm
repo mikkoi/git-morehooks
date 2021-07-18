@@ -246,7 +246,7 @@ sub check_commit_at_client {
     my ($git) = @_;
 
     my $current_branch = $git->get_current_branch();
-    return 1 unless $git->is_ref_enabled( $current_branch, $git->get_config( $CFG => 'ref' ) );
+    return 1 unless $git->is_reference_enabled( $current_branch );
 
     my $author_name  = $ENV{'GIT_AUTHOR_NAME'};
     my $author_email = '<' . $ENV{'GIT_AUTHOR_EMAIL'} . '>';
@@ -348,7 +348,7 @@ sub _check_mailmap {
 sub check_ref {
     my ( $git, $ref ) = @_;
 
-    return 1 unless $git->is_ref_enabled( $ref, $git->get_config( $CFG => 'ref' ) );
+    return 1 unless $git->is_reference_enabled( $ref );
 
     my $errors = 0;
     foreach my $commit ( $git->get_affected_ref_commits($ref) ) {
@@ -388,7 +388,7 @@ sub check_patchset {
     my $branch = $opts->{'--branch'};
     $branch = "refs/heads/$branch"
       unless $branch =~ m:^refs/:;
-    return 1 unless $git->is_ref_enabled( $branch, $git->get_config( $CFG => 'ref' ) );
+    return 1 unless $git->is_reference_enabled( $branch );
 
     return check_commit_at_server( $git, $commit );
 }
