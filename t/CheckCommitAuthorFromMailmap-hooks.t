@@ -4,7 +4,6 @@ use 5.010;
 use strict;
 use warnings;
 use Test::Most;
-# use Data::Dumper;
 use Git::Hooks::Test ':all';
 use Path::Tiny;
 use Test::Requires::Git;

@@ -5,7 +5,6 @@ use 5.010;
 use strict;
 use warnings;
 use Test::Most;
-use Data::Dumper;
 
 use Git::MoreHooks::CheckIndent;
 
@@ -22,7 +21,6 @@ FILE_END
         'file_as_string' => $file,
         'indent_char'    => q{ },
     );
-    # diag(Dumper(\%results));
     is_deeply( \%results, { 3 => "\tTab indented line." }, 'Found error with tab.' );
 
 }
@@ -40,7 +38,6 @@ FILE_END
         'indent_char'    => qq{\t},
         'indent_size'    => 2,
     );
-    # diag(Dumper(\%results));
     is_deeply( [ sort keys %results ], [1, 4], 'Found error with spaces.' );
 
 }

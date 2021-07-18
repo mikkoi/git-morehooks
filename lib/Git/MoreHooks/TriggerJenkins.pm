@@ -11,7 +11,6 @@ use strict;
 use warnings;
 use 5.010000;
 use utf8;
-use Data::Dumper;
 
 # ABSTRACT: Git::Hooks plugin to create and remove jobs from Jenkins
 
