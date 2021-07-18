@@ -247,7 +247,7 @@ sub setup_config {
     my ($git) = @_;
 
     my $config = $git->get_config();
-    $log->debugf( 'setup_config(): Current Git config:\n%s.', $config );
+    $log->debugf( "setup_config(): Current Git config:\n%s.", $config );
     $config->{ lc $CFG } //= {};
     my $default = $config->{ lc $CFG };
 
@@ -341,7 +341,7 @@ sub trigger_branch {
         # Trigger build
         my $triggered = $jenkins->trigger_build($job_name);
         if ( !defined $triggered ) {
-            $git->errorf( $PKG, "Failed to trigger job '%s'.", $job_name );
+            $git->errorf( $PKG, 'Failed to trigger job \'%s\'.', $job_name );
             if ( $git->get_config( $CFG => 'quiet' ) eq '0' ) {
                 print "Failed to trigger job '$job_name'.\n";
             }

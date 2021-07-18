@@ -2,6 +2,7 @@
 ## no critic (Documentation::RequirePodAtEnd)
 ## no critic (Documentation::RequirePodSections)
 ## no critic (ValuesAndExpressions::RequireInterpolationOfMetachars)
+## no critic (ControlStructures::ProhibitPostfixControls)
 
 package Git::MoreHooks::CheckCommitAuthorFromMailmap;
 
