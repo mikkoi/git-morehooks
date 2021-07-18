@@ -43,4 +43,3 @@ FILE_END
 }
 
 done_testing();
-

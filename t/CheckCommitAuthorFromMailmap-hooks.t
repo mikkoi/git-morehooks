@@ -116,4 +116,3 @@ $ENV{'GIT_COMMITTER_EMAIL'} = 'me.myself@comp.xx';
 check_can_commit('commit file', 'file.txt');
 
 done_testing();
-

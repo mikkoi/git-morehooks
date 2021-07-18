@@ -568,4 +568,3 @@ sub handle_commit_at_client {
 POST_COMMIT \&handle_commit_at_client;
 POST_RECEIVE \&handle_affected_refs;
 1;
-

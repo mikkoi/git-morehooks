@@ -403,4 +403,3 @@ PATCHSET_CREATED \&check_patchset;
 DRAFT_PUBLISHED \&check_patchset;
 
 1;
-

@@ -203,4 +203,3 @@ PATCHSET_CREATED \&patchset_created_callback;
 DRAFT_PUBLISHED \&draft_published_callback;
 
 1;
-
