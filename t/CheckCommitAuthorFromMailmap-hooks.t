@@ -10,6 +10,15 @@ use Test::Requires::Git;
 
 my ($repo, $clone, $T);
 
+# Eliminate the effects of system wide and global configuration.
+# https://metacpan.org/dist/Git-Repository/view/lib/Git/Repository/Tutorial.pod#Ignore-the-system-and-global-configuration-files
+my %git_test_env = (
+    LC_ALL => 'C',
+    GIT_CONFIG_NOSYSTEM => 1,
+    XDG_CONFIG_HOME     => undef,
+    HOME                => undef,
+);
+
 my $mailmap = <<'MAILMAP_END';
 <cto@company.xx>                                <cto@coompany.xx>
 Some Dude <some@dude.xx>                  nick1 <bugs@company.xx>
@@ -71,7 +80,7 @@ sub modify_file {
 sub check_can_commit {
     my ($testname, $file, $action, $data) = @_;
     modify_file($testname, $file, $action, $data);
-    test_ok($testname, $repo, 'commit', '-m', $testname);
+    test_ok($testname, $repo, 'commit', '-m', $testname, { env => \%git_test_env });
     return 1;
 }
 
@@ -79,8 +88,8 @@ sub check_cannot_commit {
     my ($testname, $regex, $file, $action, $data) = @_;
     my $filename = modify_file($testname, $file, $action, $data);
     my $exit = $regex
-        ? test_nok_match($testname, $regex, $repo, 'commit', '-m', $testname)
-        : test_nok($testname, $repo, 'commit', '-m', $testname);
+        ? test_nok_match($testname, $regex, $repo, 'commit', '-m', $testname, { env => \%git_test_env })
+        : test_nok($testname, $repo, 'commit', '-m', $testname, { env => \%git_test_env });
     $repo->run(qw/reset --hard/);
     return $exit;
 }
