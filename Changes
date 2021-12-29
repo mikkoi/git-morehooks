@@ -1,6 +1,9 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Remove cpanfile.snapshot.
+            * Migrate from Test::More to Test2.
+            * Add hook GitRepoAdmin
 
 0.010     2021-07-18 18:21:09+02:00 Europe/Stockholm
 
