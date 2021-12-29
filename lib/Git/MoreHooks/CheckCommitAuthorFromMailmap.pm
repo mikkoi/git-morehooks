@@ -283,7 +283,7 @@ sub _check_mailmap {
     my $errors            = 0;
     my $author            = $author_name . q{ } . $author_email;
     my $mailmap           = Git::Mailmap->new();
-    my $mailmap_as_string = $git->run( 'show', 'HEAD:.mailmap' );
+    my $mailmap_as_string = $git->run( 'cat-file', '-p', 'HEAD:.mailmap' );
     if ( defined $mailmap_as_string ) {
         $mailmap->from_string( 'mailmap' => $mailmap_as_string );
         $log->debugf( '_check_mailmap(): HEAD:.mailmap read in.' . ' Content from Git::Mailmap:\n%s', $mailmap->to_string() );
@@ -306,7 +306,7 @@ sub _check_mailmap {
     # 3) Config variable mailmap.blob
     my $mapfile_blob = $git->get_config( 'mailmap.' => 'blob' );
     if ( defined $mapfile_blob ) {
-        if ( my $blob_as_str = $git->command( 'show', $mapfile_blob ) ) {
+        if ( my $blob_as_str = $git->command( 'cat-file', '-p', $mapfile_blob ) ) {
             $mailmap->from_string( 'mailmap' => $blob_as_str );
             $log->debugf( '_check_mailmap(): mailmap.blob (%s) read in.' . ' Content from Git::Mailmap:\n%s',
                 $mapfile_blob, $mailmap->to_string() );
