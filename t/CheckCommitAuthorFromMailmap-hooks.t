@@ -5,7 +5,6 @@ use warnings;
 use Test2::V0;
 use Git::Hooks::Test ':all';
 use Path::Tiny;
-use Test::Requires::Git;
 
 my ( $repo, $clone, $T );
 
