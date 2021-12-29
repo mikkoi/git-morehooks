@@ -1,10 +1,11 @@
-## no critic (Documentation::PodSpelling)
+package Git::MoreHooks::GitRepoAdmin;
+
+## no critic (InputOutput::RequireCheckedSyscalls)
+## no critic (ValuesAndExpressions::ProhibitMagicNumbers)
 ## no critic (Documentation::RequirePodAtEnd)
 ## no critic (Documentation::RequirePodSections)
 ## no critic (ValuesAndExpressions::RequireInterpolationOfMetachars)
 ## no critic (ControlStructures::ProhibitPostfixControls)
-
-package Git::MoreHooks::GitRepoAdmin;
 
 use strict;
 use warnings;
@@ -22,7 +23,7 @@ Package Git::MoreHooks is currently being developed so changes in the existing h
 
 =head1 SYNOPSIS
 
-Git::MoreHooks::GitRepoAdmin is a plugin for 
+Git::MoreHooks::GitRepoAdmin is a plugin for
 L<Git::Hooks|Git::Hooks>.
 
 =for Pod::Coverage check_commit_at_client check_commit_at_server
@@ -40,12 +41,16 @@ It has several functions:
 
 =item * B<Server Side>
 
-On server side it updates the Git hooks automatically when there is configuration changes.
+On server side during C<git push> it updates the Git hooks automatically
+when there is configuration changes,
+i.e. when the VERSION file is updated with a greater number than earlier.
 
 =item * B<Client Side>
 
-On client side it informs the user when there is configuration changes
-to Git hooks config in the repo.
+
+On client side during C<git pull> it only informs
+the user when there is configuration changes.
+It does not perform any changes to user's repo.
 
 =back
 
@@ -75,6 +80,7 @@ repository once after all the refs have been updated.
 
 =back
 
+
 =head1 CONFIGURATION
 
 This plugin is configured by the following git options.
@@ -82,7 +88,7 @@ This plugin is configured by the following git options.
 =head2 githooks.gitrepoadmin.ref REFSPEC
 
 By default this plugin only reacts to updates on branches B<main>
-and B<master>. If you want to
+or B<master>. If you want to
 react to some other refs (usually some branch under
 refs/heads/), you may specify them with one or more instances of this
 option. N.B. Other good candidates are, for instance, branches
@@ -93,18 +99,14 @@ The refs can be specified as a complete ref name
 caret (C<^>), which is kept as part of the regexp
 (e.g. "^refs/heads/(master|fix)").
 
-# =head3 githooks.gitrepoadmin.match-mailmap-name [01]
-#
-# Match also with the mailmap name, not just with the email address.
-# Default: 1 (on).
-#
-# =head3 githooks.gitrepoadmin.allow-mailmap-aliases [01]
-#
-# Allow matching also with mailmap alias (commit) email (and name if allowed),
-# not just proper email (and name if allowed, see
-# B<match-mailmap-name>).
-# Default: 1 (On).
+Default value for REFSPEC is [ '^refs/heads/main$', '^refs/heads/master$' ].
 
+N.B. REFSPEC must not match two or more branch names in the repo.
+
+N.B.2. Due to the latest change of default branch name from B<master> to B<main>,
+both names are now supported by default. However, as above, the repository
+must not have both of them. If you want to have both of them,
+then you must define REFSPEC to match only one.
 
 
 =head1 EXPORTS
@@ -112,26 +114,16 @@ caret (C<^>), which is kept as part of the regexp
 This module exports the following routines that can be used directly
 without using all of Git::Hooks infrastructure.
 
-=head2 check_commit_at_client GIT
+=head2 check_affected_refs_client_side GIT, INT
 
-This is the routine used to implement the C<pre-commit> hook. It needs
-a C<Git::More> object.
+This is the routine used to implement the C<post-merge>
+hook. It needs a C<Git::More> object and an integer
+telling if this was a squash merge (1) or not (0).
 
-=head2 check_commit_at_server GIT, COMMIT
+=head2 check_affected_refs_server_side GIT
 
-This is the routine used to implement the C<pre-commit> hook. It needs
-a C<Git::More> object and a commit hash from C<Git::More::get_commit()>.
-
-=head2 check_affected_refs GIT
-
-This is the routing used to implement the C<update> and the
-C<pre-receive> hooks. It needs a C<Git::More> object.
-
-=head2 check_patchset GIT, HASH
-
-This is the routine used to implement the C<patchset-created> Gerrit
-hook. It needs a C<Git::More> object and the hash containing the
-arguments passed to the hook by Gerrit.
+This is the routing used to implement
+the C<post-receive> hook. It needs a C<Git::More> object.
 
 =head1 NOTES
 
@@ -140,9 +132,10 @@ L<Git::Hooks|https://metacpan.org/pod/Git::Hooks> package.
 
 =head1 BUGS AND LIMITATIONS
 
-
+No known bugs.
 
 =cut
+
 
 use Git::Hooks;
 use English qw( -no_match_vars );
@@ -168,33 +161,33 @@ sub _setup_config {
     $config->{ lc $CFG } //= {};
 
     my $default = $config->{ lc $CFG };
-    $default->{'ref'} //= [
-        '^refs/heads/main$',
-        '^refs/heads/master$'
-    ];
+    $default->{'ref'} //= [ '^refs/heads/main$', '^refs/heads/master$' ];
 
     return;
 }
 
 sub _current_version {
-    my ($git, $dir) = @_;
-    $log->debug( (caller 0)[3], '( ', $git, ', ', $dir, ')' );
-    my $ver_file_cnt = path(File::Spec->catdir($dir, 'VERSION'))->slurp_utf8;
-    $log->debug((caller 0)[3], ': ver_file_cnt=', $ver_file_cnt);
+    my ( $git, $dir ) = @_;
+    $log->debug( ( caller 0 )[3], '( ', $git, ', ', $dir, ')' );
+    my $ver_file_cnt = path( File::Spec->catdir( $dir, 'VERSION' ) )->slurp_utf8;
+    $log->debug( ( caller 0 )[3], ': ver_file_cnt=', $ver_file_cnt );
     my ($hooks_cfg_ver) = $ver_file_cnt =~ m/^([[:digit:]]+)$/msx;
-    return undef if ! $hooks_cfg_ver;
+    return if !$hooks_cfg_ver;
     return $hooks_cfg_ver;
 }
 
 sub _new_version {
-    my ($git, $ref, $dir) = @_;
-    $log->debug( (caller 0)[3], '( ', $git, ', ', $ref, ', ', $dir, ')' );
+    my ( $git, $ref, $dir ) = @_;
+    $log->debug( ( caller 0 )[3], '( ', $git, ', ', $ref, ', ', $dir, ')' );
 
-    my $filepath = File::Spec->catdir($dir, 'VERSION');
-    my $object = "$ref:$filepath";
+    my $filepath     = File::Spec->catdir( $dir, 'VERSION' );
+    my $object       = "$ref:$filepath";
     my $ver_file_cnt = $git->run(
-        'cat-file', '-p', $object,
-        {   env => {
+        'cat-file',
+        '-p', $object,
+        {
+            env => {
+
                 # Eliminate the effects of system wide and global configuration.
                 GIT_CONFIG_NOSYSTEM => 1,
                 XDG_CONFIG_HOME     => undef,
@@ -203,21 +196,18 @@ sub _new_version {
         },
     );
 
-    $log->debug((caller 0)[3], ': ver_file_cnt=', $ver_file_cnt);
+    $log->debug( ( caller 0 )[3], ': ver_file_cnt=', $ver_file_cnt );
     my ($hooks_cfg_ver) = $ver_file_cnt =~ m/^([[:digit:]]+)$/msx;
-    return undef if ! $hooks_cfg_ver;
+    return if !$hooks_cfg_ver;
     return $hooks_cfg_ver;
 }
 
 sub _ref_matches {
-    my ($git, $our_refs, $branches) = @_;
-    $log->debug( (caller 0)[3], '( ',
-        (join q{:}, @{$our_refs}), ', ',
-        (join q{:}, @{$branches}),
-        ')' );
+    my ( $git, $our_refs, $branches ) = @_;
+    $log->debug( ( caller 0 )[3], '( ', ( join q{:}, @{$our_refs} ), ', ', ( join q{:}, @{$branches} ), ')' );
 
     my @matches;
-    foreach my $our_ref (@{$our_refs}) {
+    foreach my $our_ref ( @{$our_refs} ) {
         my @m = grep { m/$our_ref/msx } @{$branches};
         push @matches, @m;
     }
@@ -226,16 +216,20 @@ sub _ref_matches {
 }
 
 sub _update_server_side {
-    my ($git, $ref, $dir) = @_;
-    $log->debug( (caller 0)[3], '( ', $git, ', ', $ref, ', ', $dir, ')' );
+    my ( $git, $ref, $dir ) = @_;
+    $log->debug( ( caller 0 )[3], '( ', $git, ', ', $ref, ', ', $dir, ')' );
 
     my $tmp = File::Temp->new();
+
     # Hook is always run with cdw as repo root dir.
-    my $filepath = File::Spec->catdir($dir, 'initialize-server.sh');
-    my $object = "$ref:$filepath";
+    my $filepath     = File::Spec->catdir( $dir, 'initialize-server.sh' );
+    my $object       = "$ref:$filepath";
     my $exe_file_cnt = $git->run(
-        'cat-file', '-p', $object,
-        {   env => {
+        'cat-file',
+        '-p', $object,
+        {
+            env => {
+
                 # Eliminate the effects of system wide and global configuration.
                 GIT_CONFIG_NOSYSTEM => 1,
                 XDG_CONFIG_HOME     => undef,
@@ -243,39 +237,43 @@ sub _update_server_side {
             },
         },
     );
-    $log->debug( (caller 0)[3], ': exe_file_cnt=', $exe_file_cnt );
-    print { $tmp } $exe_file_cnt;
+    $log->debug( ( caller 0 )[3], ': exe_file_cnt=', $exe_file_cnt );
+    print {$tmp} $exe_file_cnt;
     my $tmp_filename = $tmp->filename;
-    $log->debug( (caller 0)[3], ': tmp_filename=', $tmp_filename );
-    $OUTPUT_AUTOFLUSH = 1;
-    system('bash', $tmp_filename, $ref);
+    $log->debug( ( caller 0 )[3], ': tmp_filename=', $tmp_filename );
+    local $OUTPUT_AUTOFLUSH = 1;
+    system 'bash', $tmp_filename, $ref;
 
-    return undef;
+    return;
 }
 
 ##########
 
 sub check_affected_refs_client_side {
-    my ($git, $is_squash_merge) = @_;
-    $log->debug( (caller 0)[3], '( ', $git, '( ', ($is_squash_merge//'undef'), ')' );
-    $is_squash_merge = 0 if( ! defined $is_squash_merge );
+    my ( $git, $is_squash_merge ) = @_;
+    $log->debug( ( caller 0 )[3], '( ', $git, '( ', ( $is_squash_merge // 'undef' ), ')' );
+    $is_squash_merge = 0 if ( !defined $is_squash_merge );
 
     _setup_config($git);
-    $log->debug( (caller 0)[3], ': cwd=', cwd );
+    $log->debug( ( caller 0 )[3], ': cwd=', cwd );
+
     # Hook is always run with cdw as repo root dir.
-    my $curr_ver = _current_version($git, '.git/.git-repo-admin');
-    $log->debug( (caller 0)[3], ': curr_ver=', $curr_ver );
+    my $curr_ver = _current_version( $git, '.git/.git-repo-admin' );
+    $log->debug( ( caller 0 )[3], ': curr_ver=', $curr_ver );
 
     # We cannot use $git->get_affected_refs() because post-merge hook
     # does not get information about which branches are affected.
     # Don't know why!!!
     # So instead we just work with the only branch in the config.
     my @our_refs = $git->get_config( $CFG => 'ref' );
-    $log->debug( (caller 0)[3], ': our_refs=', (join q{:}, @our_refs) );
+    $log->debug( ( caller 0 )[3], ': our_refs=', ( join q{:}, @our_refs ) );
     my $branches_raw = $git->run(
-        'for-each-ref', '--format', '%(refname)',
+        'for-each-ref',
+        '--format',
+        '%(refname)',
         {
             env => {
+
                 # Eliminate the effects of system wide and global configuration.
                 GIT_CONFIG_NOSYSTEM => 1,
                 XDG_CONFIG_HOME     => undef,
@@ -284,23 +282,24 @@ sub check_affected_refs_client_side {
         },
     );
     my @branches = split qr{\n}, $branches_raw;
-    $log->debug( (caller 0)[3], ': branches=', (join q{:}, @branches) );
+    $log->debug( ( caller 0 )[3], ': branches=', ( join q{:}, @branches ) );
 
     my @matches = _ref_matches( $git, \@our_refs, \@branches );
-    if( @matches > 1 ) {
-        $git->fault( 'Config variable \'ref\' matches with more than one branch.' );
+    if ( @matches > 1 ) {
+        $git->fault('Config variable \'ref\' matches with more than one branch.');
         return scalar @matches;
-    } elsif( @matches == 0 ) {
-        $git->fault( 'Config variable \'ref\' does not match with any branch.' );
+    }
+    elsif ( @matches == 0 ) {
+        $git->fault('Config variable \'ref\' does not match with any branch.');
         return 1;
     }
 
     # Okay, no errors in the config.
     # We always proceed to read the VERSION from the hook config branch.
-    my $new_ver = _new_version($git, $matches[0], '.git-repo-admin');
-    $log->debug( (caller 0)[3], ': new_ver=', $new_ver );
-    if( $new_ver > $curr_ver ) {
-        $log->debug( (caller 0)[3], 'Newer version detected. Update config.' );
+    my $new_ver = _new_version( $git, $matches[0], '.git-repo-admin' );
+    $log->debug( ( caller 0 )[3], ': new_ver=', $new_ver );
+    if ( $new_ver > $curr_ver ) {
+        $log->debug( ( caller 0 )[3], 'Newer version detected. Update config.' );
         say '********************************************************************************';
         say '*                          UPDATE CLIEND SIDE HOOKS                            *';
         say '*               Run .git-repo-admin/install-client-hooks.sh                    *';
@@ -313,43 +312,45 @@ sub check_affected_refs_client_side {
 
 sub check_affected_refs_server_side {
     my ($git) = @_;
-    $log->debug( (caller 0)[3], '( ', $git, ')' );
+    $log->debug( ( caller 0 )[3], '( ', $git, ')' );
 
     _setup_config($git);
-    my $curr_ver = _current_version($git, '.git-repo-admin');
-    $log->debug( (caller 0)[3], ': curr_ver=', $curr_ver );
+    my $curr_ver = _current_version( $git, '.git-repo-admin' );
+    $log->debug( ( caller 0 )[3], ': curr_ver=', $curr_ver );
 
     # We're only interested in branches
-    my @refs = grep {m:^refs/heads/:} $git->get_affected_refs();
+    my @refs = grep { m{^refs/heads/} } $git->get_affected_refs();
     return 1 unless @refs;
 
     my @our_refs = $git->get_config( $CFG => 'ref' );
-    $log->debug( (caller 0)[3], ': our_refs=', (join q{:}, @our_refs) );
+    $log->debug( ( caller 0 )[3], ': our_refs=', ( join q{:}, @our_refs ) );
 
     # my ($r, $match) = _ref_matches( $git, \@our_refs, \@refs );
     my @matches = _ref_matches( $git, \@our_refs, \@refs );
-    $log->debug( (caller 0)[3], ': matches=', (join q{:}, @matches) );
-    if( @matches > 1 ) {
-        $git->fault( 'Config variable \'ref\' matches with more than one branch.' );
-        $log->debug( (caller 0)[3], '(): ' . scalar @matches);
+    $log->debug( ( caller 0 )[3], ': matches=', ( join q{:}, @matches ) );
+    if ( @matches > 1 ) {
+        $git->fault('Config variable \'ref\' matches with more than one branch.');
+        $log->debug( ( caller 0 )[3], '(): ' . scalar @matches );
         return scalar @matches;
-    } elsif( @matches == 1 ) {
-        my $new_ver = _new_version($git, $matches[0], '.git-repo-admin');
-        $log->debug( (caller 0)[3], ': new_ver=', $new_ver );
-        if( $new_ver > $curr_ver ) {
-            $log->debug( (caller 0)[3], 'Newer version detected. Update config.' );
+    }
+    elsif ( @matches == 1 ) {
+        my $new_ver = _new_version( $git, $matches[0], '.git-repo-admin' );
+        $log->debug( ( caller 0 )[3], ': new_ver=', $new_ver );
+        if ( $new_ver > $curr_ver ) {
+            $log->debug( ( caller 0 )[3], 'Newer version detected. Update config.' );
             _update_server_side( $git, $matches[0], '.git-repo-admin' );
         }
-        $log->debug( (caller 0)[3], '(): 0' );
+        $log->debug( ( caller 0 )[3], '(): 0' );
         return 0;
     }
+
     # On server side we get the affected refs via the hook, and the main/master
     # doesn't need to be one of them, if it wasn't updated.
 
 }
 
 # Install hooks
-POST_RECEIVE \&check_affected_refs_server_side;
 POST_MERGE \&check_affected_refs_client_side;
+POST_RECEIVE \&check_affected_refs_server_side;
 
 1;
