@@ -388,7 +388,7 @@ sub check_patchset {
 
     my $branch = $opts->{'--branch'};
     $branch = "refs/heads/$branch"
-      unless $branch =~ m:^refs/:;
+      unless $branch =~ m{^refs/}msx;
     return 1 unless $git->is_reference_enabled( $branch );
 
     return check_commit_at_server( $git, $commit );
