@@ -214,7 +214,7 @@ In the B<pre-commit> hook we want to read a file in the working directory.
 
 =cut
 
-use Git::Hooks 2.008000;
+use Git::Hooks;
 use Path::Tiny;
 use Log::Any qw{$log};
 require Git::Mailmap;

@@ -26,6 +26,8 @@ Use package via L<Git::Hooks|Git::Hooks> interface (git config file).
 
 =head1 REQUIREMENTS
 
+L<Git::Hooks|Git::Hooks> v2.8.0 or later.
+
 Git::MoreHooks uses L<Log::Any|Log::Any> logging API.
 It must be installed even if you
 haven't configured it to log anywhere.
