@@ -36,6 +36,10 @@ Base for Commit checking hooks.
     use Git::MoreHooks::CheckCommitBase;
     $::ROOT_FUNC = \&my_check_function;
 
+Alternatively:
+
+    use Git::MoreHooks::CheckCommitBase \&my_check_function;
+
 Git::MoreHooks::CheckCommitBase hooks itself to the hooks below:
 
 =over
