@@ -154,9 +154,10 @@ $CFG = 'githooks.' . $CFG;
 
 sub _setup_config {
     my ($git) = @_;
+    $log->debugf( __PACKAGE__ . '::_setup_config(%s):', '$git' );
 
     my $config = $git->get_config();
-    $log->debugf( '_setup_config(): Current Git config:\n%s.', $config );
+    $log->tracef( __PACKAGE__ . '::_setup_config(): Current Git config:\n%s.', $config );
 
     $config->{ lc $CFG } //= {};
 

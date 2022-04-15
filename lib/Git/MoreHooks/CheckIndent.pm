@@ -170,9 +170,10 @@ $CFG = 'githooks.' . $CFG;
 
 sub _setup_config {
     my ($git) = @_;
+    $log->debugf( __PACKAGE__ . '::_setup_config(%s):', '$git' );
 
     my $config = $git->get_config();
-    $log->debugf( '_setup_config(): Current Git config:\n%s.', $config );
+    $log->tracef( __PACKAGE__ . '::_setup_config(): Current Git config:\n%s.', $config );
 
     # Put empty hash if there is no config items.
     $config->{ lc $CFG } //= {};
@@ -184,7 +185,7 @@ sub _setup_config {
 
     # Check validity of config items.
     foreach my $file_def ( @{$default->{'file'}} ) {
-        $log->debugf( '_setup_config(): Check for validity, config item: \'%s\'.', $file_def );
+        $log->debugf( __PACKAGE__ . q{::} . '_setup_config(): Check for validity, config item: \'%s\'.', $file_def );
         if (
             ## no critic (RegularExpressions::ProhibitComplexRegexes)
             $file_def !~ m{^
@@ -203,7 +204,7 @@ sub _setup_config {
         }
     }
     foreach my $exc_def ( @{$default->{'exception'}} ) {
-        $log->debugf( '_setup_config(): Check for validity, config item: \'%s\'.', $exc_def );
+        $log->debugf( __PACKAGE__ . q{::} . '_setup_config(): Check for validity, config item: \'%s\'.', $exc_def );
         if (
             ## no critic (RegularExpressions::ProhibitComplexRegexes)
             $exc_def !~ m{^
@@ -264,7 +265,7 @@ sub check_for_indent {
             if (!map { $row =~ m/$_/msx } @{$params{'exceptions'}}) {
                 $errors{$row_nr} = $row;
             } else {
-                $log->debugf('Except this row: \'%s\'', $row);
+                $log->debugf(__PACKAGE__ . q{::} . 'check_for_indent(): Except this row: \'%s\'', $row);
             }
         }
         $row_nr++;

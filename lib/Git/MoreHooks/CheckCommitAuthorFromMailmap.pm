@@ -228,9 +228,10 @@ $CFG = 'githooks.' . $CFG;
 
 sub _setup_config {
     my ($git) = @_;
+    $log->debugf( __PACKAGE__ . '::_setup_config(%s):', '$git' );
 
     my $config = $git->get_config();
-    $log->debugf( '_setup_config(): Current Git config:\n%s.', $config );
+    $log->tracef( __PACKAGE__ . '::_setup_config(): Current Git config:\n%s.', $config );
 
     $config->{ lc $CFG } //= {};
 
@@ -286,7 +287,7 @@ sub _check_mailmap {
     my $mailmap_as_string = $git->run( 'cat-file', '-p', 'HEAD:.mailmap' );
     if ( defined $mailmap_as_string ) {
         $mailmap->from_string( 'mailmap' => $mailmap_as_string );
-        $log->debugf( '_check_mailmap(): HEAD:.mailmap read in.' . ' Content from Git::Mailmap:\n%s', $mailmap->to_string() );
+        $log->debugf( __PACKAGE__ . q{::} . '_check_mailmap(): HEAD:.mailmap read in.' . ' Content from Git::Mailmap:\n%s', $mailmap->to_string() );
     }
 
     # 2) Config variable mailmap.file
@@ -295,7 +296,7 @@ sub _check_mailmap {
         if ( -e $mapfile_location ) {
             my $file_as_str = Path::Tiny->file($mapfile_location)->slurp_utf8;
             $mailmap->from_string( 'mailmap' => $file_as_str );
-            $log->debugf( '_check_mailmap(): mailmap.file (%s) read in.' . ' Content from Git::Mailmap:\n%s',
+            $log->debugf( __PACKAGE__ . q{::} . '_check_mailmap(): mailmap.file (%s) read in.' . ' Content from Git::Mailmap:\n%s',
                 $mapfile_location, $mailmap->to_string() );
         }
         else {
@@ -308,7 +309,7 @@ sub _check_mailmap {
     if ( defined $mapfile_blob ) {
         if ( my $blob_as_str = $git->command( 'cat-file', '-p', $mapfile_blob ) ) {
             $mailmap->from_string( 'mailmap' => $blob_as_str );
-            $log->debugf( '_check_mailmap(): mailmap.blob (%s) read in.' . ' Content from Git::Mailmap:\n%s',
+            $log->debugf( __PACKAGE__ . q{::} . '_check_mailmap(): mailmap.blob (%s) read in.' . ' Content from Git::Mailmap:\n%s',
                 $mapfile_blob, $mailmap->to_string() );
         }
         else {
@@ -323,9 +324,9 @@ sub _check_mailmap {
     if ( $git->get_config( $CFG => 'match-mailmap-name' ) eq '1' ) {
         $search_params{'proper-name'} = $author_name;
     }
-    $log->debugf( '_check_mailmap(): search_params=%s.', \%search_params );
+    $log->debugf( __PACKAGE__ . q{::} . '_check_mailmap(): search_params=%s.', \%search_params );
     $verified = $mailmap->verify(%search_params);
-    $log->debugf( '_check_mailmap(): verified=%s.', $verified );
+    $log->debugf( __PACKAGE__ . q{::} . '_check_mailmap(): verified=%s.', $verified );
 
     # If was not found among proper-*, and user wants, search aliases.
     if (  !$verified
@@ -335,7 +336,7 @@ sub _check_mailmap {
         if ( $git->get_config( $CFG => 'match-mailmap-name' ) eq '1' ) {
             $c_search_params{'commit-name'} = $author_name;
         }
-        $log->debugf( '_check_mailmap(): c_search_params=%s.', \%c_search_params );
+        $log->debugf( __PACKAGE__ . q{::} . '_check_mailmap(): c_search_params=%s.', \%c_search_params );
         $verified = $mailmap->verify(%c_search_params);
     }
     if ( $verified == 0 ) {
