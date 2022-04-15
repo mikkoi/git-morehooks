@@ -123,6 +123,7 @@ from Git and fed directly as scalar variables to a checker
 tool. If you want the checker to read a file instead,
 set this config item to "1". Default is "0".
 
+
 =head3 githooks.checkperl.name PATTERN
 
 Use regexp or glob values to specify file patterns.
@@ -154,12 +155,14 @@ Default values are:
         name = *.psgi
         name = *.t
 
+
 =head3 githooks.checkperl.critic.active BOOL
 
 Activate or deactivate Perl::Critic check.
 Set this to false ("0") if you only want to use the other
 checkers.
 Default is true ("1").
+
 
 =head3 githooks.checkperl.critic.profile REF_AND_FILENAME
 
@@ -180,30 +183,27 @@ If this item is not set, Perl::Critic is started with its own
 default values. It will not read the currently
 present F<.perlcriticrc> file even if available.
 
-You can alternatively set the following values
+
+=head3 githooks.checkperl.critic.cfg HASH
+
+You can alternatively set all the values
 in the configuration but if B<profile> is set, they are ignored.
 
 Please consult to
 L<Perl::Critic|https://metacpan.org/pod/Perl::Critic#CONSTRUCTOR>
 for further information.
 
-=head3 githooks.checkperl.critic.severity INT / STRING
+All the values in this section will be used when providing
+the configuration to Perl::Critic, including properties
+which Perl::Critic does not use but which are used
+to configure individual policies.
 
-=head3 githooks.checkperl.critic.theme STRING
+E.g.
 
-=head3 githooks.checkperl.critic.include LIST
-
-=head3 githooks.checkperl.critic.exclude LIST
-
-=head3 githooks.checkperl.critic.top INT
-
-=head3 githooks.checkperl.critic.only BOOL
-
-=head3 githooks.checkperl.critic.force BOOL
-
-=head3 githooks.checkperl.critic.verbose INT
-
-=head3 githooks.checkperl.critic.allow-unsafe BOOL
+    [githooks "checkperl.critic.cfg"]
+        severity     = brutal
+        verbose      = 11
+        allow-unsafe = 0
 
 
 =head1 EXPORTS
@@ -345,21 +345,11 @@ sub _setup_config {
 # Internal
 
 use Config::Tiny;
-use Const::Fast;
-const my $PERL_CRITIC_RC => '.perlcriticrc';
-const my $DEFAULT_CRITIC_SEVERITY => 5;
 
 sub _get_critic_profile {
     my ($git, $profile) = @_;
-    $profile = $profile//$PERL_CRITIC_RC;
     $log->debugf( __PACKAGE__ . q{::} . '_get_critic_profile():profile=%s', $profile);
 
-    # my $file = $git->run(qw/ls-files -s/, $profile);
-    # my ($mode, $sha, $n, $filename) = split q{ }, $file;
-    # $log->debugf( __PACKAGE__ . q{::}
-    #     . '_get_critic_profile():(mode, sha, n, name)=(%s, %s, %s, %s)',
-    #     ($mode, $sha, $n, $filename)
-    # );
     my $content = $git->run(qw/cat-file -p/, $profile);
     $log->tracef( __PACKAGE__ . q{::} . '_get_critic_profile():content=%s', $content);
 
@@ -375,6 +365,7 @@ sub _read_critic_profile {
 sub _set_critic {
     my ($git) = @_;
     my $cfg_section = $CFG . q{.} . 'critic';
+
     my $pc_rc_filename = $git->get_config( $cfg_section => 'profile');
     $log->tracef( __PACKAGE__ . q{::} . '_set_critic():pc_rc_filename=%s', $pc_rc_filename);
 
@@ -382,26 +373,44 @@ sub _set_critic {
     load 'Perl::Critic::Violation';
     load 'Perl::Critic::Utils';
 
-    # my $pc = Perl::Critic->new( -severity => 0, -verbose => 1, '-profile' => $pc_rc_filename//q{});
-    my $content = _get_critic_profile( $git, $pc_rc_filename );
-    my $rc = _read_critic_profile( $git, $content );
-    $log->debugf( __PACKAGE__ . q{::}
-        . '_set_critic():(rc)=(%s)', $rc
-    );
-
+    my @critic_cfg_props = qw( severity theme top only force verbose allow-unsafe );
+    my @critic_cfg_list_props = qw( include exclude );
     my %cfg;
-    $cfg{'-profile'} = q{};  # Do not read a .perlcriticrc file!
-    ## no critic (ControlStructures::ProhibitPostfixControls)
-    my $r = $rc->{_};
-    $cfg{'-severity'} = exists $r->{'severity'} ? $r->{'severity'} : $DEFAULT_CRITIC_SEVERITY;
-    $cfg{'-theme'} = $r->{'theme'} if(exists $r->{'theme'});
-    $cfg{'-include'} = [ split qr/\s+/msx, $r->{'include'} ] if exists $r->{'include'};
-    $cfg{'-exclude'} = [ split qr/\s+/msx, $r->{'exclude'} ] if exists $r->{'exclude'};
-    $cfg{'-top'} = $r->{'top'} if exists $r->{'top'};
-    $cfg{'-only'} = $r->{'only'} if exists $r->{'only'};
-    $cfg{'-force'} = $r->{'force'} if exists $r->{'force'};
-    $cfg{'-verbose'} = $r->{'verbose'} if exists $r->{'verbose'};
-    $cfg{'-allow-unsafe'} = $r->{'allow-unsafe'} if exists $r->{'allow-unsafe'};
+    if( $pc_rc_filename ) {
+        my $content = _get_critic_profile( $git, $pc_rc_filename );
+        my $rc = _read_critic_profile( $git, $content );
+        $log->debugf( __PACKAGE__ . q{::}
+            . '_set_critic():(rc)=(%s)', $rc
+        );
+
+        $cfg{'-profile'} = q{};  # Do not read a .perlcriticrc file!
+        ## no critic (ControlStructures::ProhibitPostfixControls)
+        my $props = $rc->{_};
+        $log->debugf( __PACKAGE__ . q{::} . '_set_critic():(props)=%s', $props);
+        foreach my $key ( keys %{ $props } ) {
+            my $item_name = ( any { $key } @critic_cfg_props ) ? "-$key" : $key;
+            my $val = $props->{ $key };
+            $cfg{ $item_name } = $val;
+        }
+        # These two require special handling.
+        foreach my $key ( @critic_cfg_list_props ) {
+            my $val = $props->{ $key };
+            $cfg{ "-$key" } = [ split qr/\s+/msx, $val ] if( $val ); ## no critic (ControlStructures::ProhibitPostfixControls)
+        }
+    } else {
+        my $props = $git->get_config( "$cfg_section.cfg" );
+        $log->debugf( __PACKAGE__ . q{::} . '_set_critic():(props)=%s', $props);
+        foreach my $key ( keys %{ $props } ) {
+            my $item_name = ( any { $key } @critic_cfg_props ) ? "-$key" : $key;
+            my $val = $props->{ $key }->[-1]; # The value is a list, take last item from it.
+            $cfg{ $item_name } = $val;
+        }
+        # These two require special handling.
+        foreach my $key ( @critic_cfg_list_props ) {
+            my $val = $props->{ $key }->[-1];
+            $cfg{ "-$key" } = [ split qr/\s+/msx, $val ] if( $val ); ## no critic (ControlStructures::ProhibitPostfixControls)
+        }
+    }
     $log->debugf( __PACKAGE__ . q{::} . '_set_critic():(cfg)=(%s)', \%cfg);
 
     my $pc = Perl::Critic->new( %cfg );
