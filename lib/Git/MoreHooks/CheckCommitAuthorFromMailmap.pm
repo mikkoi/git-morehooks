@@ -204,7 +204,7 @@ L<Git::Hooks|https://metacpan.org/pod/Git::Hooks> package.
 
 The hook reads the file F<HEAD:.mailmap> with git command C<show>.
 This is clearly the wrong approach for several reasons.
-Firstly, C<git-show> is a 
+Firstly, C<git-show> is a
 L<porcelain|https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git.html>
 command, not a plumbing command.
 Secondly, C<git-show> fails with an error if there is no commits in the repository.
@@ -248,12 +248,13 @@ sub check_commit_at_client {
     my ($git) = @_;
 
     my $current_branch = $git->get_current_branch();
-    return 1 unless $git->is_reference_enabled( $current_branch );
+    return 1 unless $git->is_reference_enabled($current_branch);
 
     my $author_name  = $ENV{'GIT_AUTHOR_NAME'};
     my $author_email = '<' . $ENV{'GIT_AUTHOR_EMAIL'} . '>';
 
-    return _check_author( $git, $author_name, $author_email );
+    my $commit = ':0';
+    return _check_author( $git, $commit, $author_name, $author_email );
 }
 
 sub check_commit_at_server {
@@ -262,32 +263,35 @@ sub check_commit_at_server {
     my $author_name  = $commit->{'author_name'};
     my $author_email = '<' . $commit->{'author_email'} . '>';
 
-    return _check_author( $git, $author_name, $author_email );
+    return _check_author( $git, $commit, $author_name, $author_email );
 }
 
 sub _check_author {
-    my ( $git, $author_name, $author_email ) = @_;
+    my ( $git, $commit, $author_name, $author_email ) = @_;
 
     _setup_config($git);
 
     return 1 if $git->im_admin();
 
     my $errors = 0;
-    _check_mailmap( $git, $author_name, $author_email ) or ++$errors;
+    _check_mailmap( $git, $commit, $author_name, $author_email ) or ++$errors;
 
     return $errors == 0;
 }
 
 sub _check_mailmap {
-    my ( $git, $author_name, $author_email ) = @_;
+    my ( $git, $commit, $author_name, $author_email ) = @_;
 
     my $errors            = 0;
     my $author            = $author_name . q{ } . $author_email;
     my $mailmap           = Git::Mailmap->new();
     my $mailmap_as_string = $git->run( 'cat-file', '-p', 'HEAD:.mailmap' );
+
+    # TODO Move config checking to _setup_config() or elsewhere so it can break early on.
     if ( defined $mailmap_as_string ) {
         $mailmap->from_string( 'mailmap' => $mailmap_as_string );
-        $log->debugf( __PACKAGE__ . q{::} . '_check_mailmap(): HEAD:.mailmap read in.' . ' Content from Git::Mailmap:\n%s', $mailmap->to_string() );
+        $log->debugf( __PACKAGE__ . q{::} . '_check_mailmap(): HEAD:.mailmap read in.' . ' Content from Git::Mailmap:\n%s',
+            $mailmap->to_string() );
     }
 
     # 2) Config variable mailmap.file
@@ -300,7 +304,8 @@ sub _check_mailmap {
                 $mapfile_location, $mailmap->to_string() );
         }
         else {
-            $git->error( $PKG, 'Config variable \'mailmap.file\'' . ' does not point to a file.' );
+            $git->fault('Config variable \'mailmap.file\' does not point to a file.',
+                    {prefix => $PKG, commit => $commit});
         }
     }
 
@@ -313,7 +318,9 @@ sub _check_mailmap {
                 $mapfile_blob, $mailmap->to_string() );
         }
         else {
-            $git->error( $PKG, 'Config variable \'mailmap.blob\'' . ' does not point to a file.' );
+            $git->fault('Config variable \'mailmap.blob\' does not point to a file.',
+                    {prefix => $PKG, commit => $commit});
+            ++$errors;
         }
     }
 
@@ -329,8 +336,7 @@ sub _check_mailmap {
     $log->debugf( __PACKAGE__ . q{::} . '_check_mailmap(): verified=%s.', $verified );
 
     # If was not found among proper-*, and user wants, search aliases.
-    if (  !$verified
-        && $git->get_config( $CFG => 'allow-mailmap-aliases' ) eq '1' )
+    if ( !$verified && $git->get_config( $CFG => 'allow-mailmap-aliases' ) eq '1' )
     {
         my %c_search_params = ( 'commit-email' => $author_email );
         if ( $git->get_config( $CFG => 'match-mailmap-name' ) eq '1' ) {
@@ -340,8 +346,9 @@ sub _check_mailmap {
         $verified = $mailmap->verify(%c_search_params);
     }
     if ( $verified == 0 ) {
-        $git->error( $PKG, 'commit author ' . "'\Q$author\Q' does not match in mailmap file." )
-          and ++$errors;
+        $git->fault("Commit author '$author' has no match in mailmap file.",
+                {prefix => $PKG, commit => $commit});
+        ++$errors;
     }
 
     return $errors == 0;
@@ -350,7 +357,7 @@ sub _check_mailmap {
 sub check_ref {
     my ( $git, $ref ) = @_;
 
-    return 1 unless $git->is_reference_enabled( $ref );
+    return 1 unless $git->is_reference_enabled($ref);
 
     my $errors = 0;
     foreach my $commit ( $git->get_affected_ref_commits($ref) ) {
@@ -390,7 +397,7 @@ sub check_patchset {
     my $branch = $opts->{'--branch'};
     $branch = "refs/heads/$branch"
       unless $branch =~ m{^refs/}msx;
-    return 1 unless $git->is_reference_enabled( $branch );
+    return 1 unless $git->is_reference_enabled($branch);
 
     return check_commit_at_server( $git, $commit );
 }
