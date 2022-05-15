@@ -304,8 +304,7 @@ sub _check_mailmap {
                 $mapfile_location, $mailmap->to_string() );
         }
         else {
-            $git->fault('Config variable \'mailmap.file\' does not point to a file.',
-                    {prefix => $PKG, commit => $commit});
+            $git->fault( 'Config variable \'mailmap.file\' does not point to a file.', { prefix => $PKG, commit => $commit } );
         }
     }
 
@@ -318,8 +317,7 @@ sub _check_mailmap {
                 $mapfile_blob, $mailmap->to_string() );
         }
         else {
-            $git->fault('Config variable \'mailmap.blob\' does not point to a file.',
-                    {prefix => $PKG, commit => $commit});
+            $git->fault( 'Config variable \'mailmap.blob\' does not point to a file.', { prefix => $PKG, commit => $commit } );
             ++$errors;
         }
     }
@@ -336,8 +334,7 @@ sub _check_mailmap {
     $log->debugf( __PACKAGE__ . q{::} . '_check_mailmap(): verified=%s.', $verified );
 
     # If was not found among proper-*, and user wants, search aliases.
-    if ( !$verified && $git->get_config( $CFG => 'allow-mailmap-aliases' ) eq '1' )
-    {
+    if ( !$verified && $git->get_config( $CFG => 'allow-mailmap-aliases' ) eq '1' ) {
         my %c_search_params = ( 'commit-email' => $author_email );
         if ( $git->get_config( $CFG => 'match-mailmap-name' ) eq '1' ) {
             $c_search_params{'commit-name'} = $author_name;
@@ -346,8 +343,7 @@ sub _check_mailmap {
         $verified = $mailmap->verify(%c_search_params);
     }
     if ( $verified == 0 ) {
-        $git->fault("Commit author '$author' has no match in mailmap file.",
-                {prefix => $PKG, commit => $commit});
+        $git->fault( "Commit author '$author' has no match in mailmap file.", { prefix => $PKG, commit => $commit } );
         ++$errors;
     }
 
@@ -403,11 +399,10 @@ sub check_patchset {
 }
 
 # Install hooks
-PRE_COMMIT \&check_commit_at_client;
-UPDATE \&check_affected_refs;
-PRE_RECEIVE \&check_affected_refs;
-REF_UPDATE \&check_affected_refs;
-PATCHSET_CREATED \&check_patchset;
-DRAFT_PUBLISHED \&check_patchset;
+my $options = { config => \&_setup_config };
+
+GITHOOKS_CHECK_PRE_COMMIT( \&check_commit_at_client, $options );
+GITHOOKS_CHECK_AFFECTED_REFS( \&check_affected_refs, $options );
+GITHOOKS_CHECK_PATCHSET( \&check_patchset, $options );
 
 1;
