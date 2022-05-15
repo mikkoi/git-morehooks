@@ -504,8 +504,9 @@ sub check_new_or_modified_files {
 
             # Report errors
             foreach my $violation (@violations) {
-                $git->fault(q{[} . $checker->{'name'} . "] error in file '$filename':\n" . $violation,
+                $git->fault($checker->{'name'} . "] error in file '$filename':\n" . $violation,
                     {prefix => 'CheckPerl', commit => $commit});
+                ++$errors;
             }
         }
     }
