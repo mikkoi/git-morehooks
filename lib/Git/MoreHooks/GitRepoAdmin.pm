@@ -137,7 +137,7 @@ No known bugs.
 =cut
 
 
-use Git::Hooks 2.008000;
+use Git::Hooks 3.000000;
 use English qw( -no_match_vars );
 use Path::Tiny;
 use Cwd;
