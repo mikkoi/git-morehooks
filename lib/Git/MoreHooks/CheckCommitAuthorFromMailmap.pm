@@ -8,7 +8,6 @@ package Git::MoreHooks::CheckCommitAuthorFromMailmap;
 
 use strict;
 use warnings;
-use 5.010000;
 use utf8;
 
 # ABSTRACT: Check Git commit author by using the mailmap file.

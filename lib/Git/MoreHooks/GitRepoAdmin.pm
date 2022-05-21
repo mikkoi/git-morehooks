@@ -9,7 +9,6 @@ package Git::MoreHooks::GitRepoAdmin;
 
 use strict;
 use warnings;
-use 5.010000;
 use utf8;
 
 # ABSTRACT: Integrate with .git-repo-admin

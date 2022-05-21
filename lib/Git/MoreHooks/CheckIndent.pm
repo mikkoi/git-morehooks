@@ -8,7 +8,6 @@ package Git::MoreHooks::CheckIndent;
 
 use strict;
 use warnings;
-use 5.010000;
 use utf8;
 
 # ABSTRACT: Check committed files for problems with indentation.
