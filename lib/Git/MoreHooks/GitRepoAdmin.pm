@@ -320,7 +320,7 @@ sub check_affected_refs_server_side {
     $log->debug( ( caller 0 )[3], ': curr_ver=', $curr_ver );
 
     # We're only interested in branches
-    my @refs = grep { m{^refs/heads/} } $git->get_affected_refs();
+    my @refs = grep { m{^refs/heads/}msx } $git->get_affected_refs();
     return 1 unless @refs;
 
     my @our_refs = $git->get_config( $CFG => 'ref' );
