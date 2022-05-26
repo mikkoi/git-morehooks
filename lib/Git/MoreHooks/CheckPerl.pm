@@ -1,8 +1,4 @@
-## no critic (Documentation::PodSpelling)
-## no critic (Documentation::RequirePodAtEnd)
-## no critic (Documentation::RequirePodSections)
 ## no critic (ValuesAndExpressions::RequireInterpolationOfMetachars)
-## no critic (Subroutines::RequireArgUnpacking)
 
 package Git::MoreHooks::CheckPerl;
 
