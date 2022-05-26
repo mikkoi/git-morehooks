@@ -282,7 +282,7 @@ sub check_affected_refs_client_side {
             },
         },
     );
-    my @branches = split qr{\n}, $branches_raw;
+    my @branches = split qr{\n}msx, $branches_raw;
     $log->debug( ( caller 0 )[3], ': branches=', ( join q{:}, @branches ) );
 
     my @matches = _ref_matches( $git, \@our_refs, \@branches );
