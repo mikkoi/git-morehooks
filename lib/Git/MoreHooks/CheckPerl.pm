@@ -310,53 +310,17 @@ sub _setup_config {
     $default->{'perl-c'} //= {};
 
     # Perl::Critic
-    $default->{'critic'}->{'active'} //= [1];
+    $default->{'critic'}->{'active'} //= ['true'];
     $default->{'critic'}->{'profile'} //= [];
 
     # B::Lint
-    $default->{'b-lint'}->{'active'} //= [1];
+    $default->{'b-lint'}->{'active'} //= ['true'];
 
     # Perl -c
     $default->{'perl-c'}->{'active'} //= [0];
 
-    # Check validity of config items.
-    foreach my $file_def ( @{$default->{'file'}} ) {
-        $log->debugf( __PACKAGE__ . q{::} . '_setup_config(): Check for validity, config item: \'%s\'.', $file_def );
-        if (
-            ## no critic (RegularExpressions::ProhibitComplexRegexes)
-            $file_def !~ m{^
-            (?:[[:graph:]]+)
-            (?:
-                (?:[[:space:]]{1,}indent-size:[[:digit:]]+){1,}
-                | (?:[[:space:]]{1,}indent-char:(?:space|tab|both))
-            ){1,}
-            (?:[[:space:]]{0,})
-            $}msx
-            ## use critic (RegularExpressions::ProhibitComplexRegexes)
-          )
-        {
-            $git->error( $PKG, 'Faulty config item: \'' . $file_def . '\'.' );
-            return 0;
-        }
-    }
-    foreach my $exc_def ( @{$default->{'exception'}} ) {
-        $log->debugf( __PACKAGE__ . q{::} . '_setup_config(): Check for validity, config item: \'%s\'.', $exc_def );
-        if (
-            ## no critic (RegularExpressions::ProhibitComplexRegexes)
-            $exc_def !~ m{^
-            (?:[[:space:]]{0,})   (?# Free spacing before)
-            (?:[[:graph:]]+)      (?# File name pattern)
-            (?:[[:space:]]{1,})   (?# Required spacing)
-            (?:[[:graph:]]+)      (?# Regular expression)
-            (?:[[:space:]]{0,})   (?# Free spacing after)
-            $}msx
-            ## use critic (RegularExpressions::ProhibitComplexRegexes)
-          )
-        {
-            $git->error( $PKG, 'Faulty config item: \'' . $exc_def . '\'.' );
-            return 0;
-        }
-    }
+    $log->tracef( __PACKAGE__ . '::_setup_config(): Final Git config:\n%s.', $config );
+
     return 1;
 }
 
@@ -440,33 +404,30 @@ sub _set_critic {
     my $format = Perl::Critic::Utils::verbosity_to_format( $verbosity );
     Perl::Critic::Violation::set_format( "# $format" );
 
-    return $pc;
+    return { 'critic' => $pc };
 }
 
 sub _check_perl_critic_violations {
-    my ($git, $commit, $critic, $content, $filename) = @_;
+    my ($git, $commit, $cache, $content, $filename) = @_;
 
+    my ($critic) = $cache->{'critic'};
     # Source code should only be passed to PPI::Document->new as a SCALAR reference
     my @violations = $critic->critique( \$content );
     $log->debugf( __PACKAGE__ . q{::}
         . '_check_perl_critic_violations():file=%s, violations=%s', $filename, \@violations);
 
-    # Report errors
-    foreach my $violation (@violations) {
-        $git->fault("Perl::Critic error in file '$filename': " . $violation,
-            {prefix => __PACKAGE__, commit => $commit});
-    }
-
-    # return number of errors
-    return scalar @violations;
+    return @violations;
 }
 
 # TODO Make this dynamic, add more checkers.
 my @PERL_CHECKERS = (
     {
-        name => q{Perl::Critic},
-        f => \&_check_perl_critic_violations,
+        name  => q{Perl::Critic},
+        cfg   => q{critic},
+        f_do  => \&_check_perl_critic_violations,
         input => 'FILE_CONTENT',
+        f_pre => \&_set_critic,
+        cache => undef,
     }
 );
 
@@ -478,10 +439,10 @@ sub check_new_or_modified_files {
     $log->debugf( __PACKAGE__ . q{::} . 'check_new_or_modified_files(%s, %s, %s)', 'git', $commit, \@files);
     my $errors = 0;
 
-    my $critic = _set_critic($git);
-
+    my $config = $git->get_config( $CFG );
+    $log->tracef( __PACKAGE__ . q{::} . 'check_new_or_modified_files():config=%s', $config);
     my @name_patterns;
-    foreach my $check ($git->get_config($CFG => 'name')) {
+    foreach my $check (@{ $config->{'name'} }) {
         my ($pattern, $command) = split q{ }, $check, 2;
         # TODO Refactor regex.
         ## no critic (RegularExpressions::RequireDotMatchAnything)
@@ -494,6 +455,7 @@ sub check_new_or_modified_files {
         }
         push @name_patterns, $pattern;
     }
+    $log->debugf( __PACKAGE__ . q{::} . 'check_new_or_modified_files():name_patterns=%s', \@name_patterns);
     foreach my $file ($git->run(qw/ls-files -s/, @files)) {
         my ($mode, $sha, $n, $filename) = split q{ }, $file;
         $log->tracef( __PACKAGE__ . q{::}
@@ -511,19 +473,28 @@ sub check_new_or_modified_files {
         $log->tracef( __PACKAGE__ . q{::} . 'check_new_or_modified_files():content=%s', $content);
 
         foreach my $checker ( @PERL_CHECKERS ) {
+            $log->debugf( __PACKAGE__ . q{::} . 'check_new_or_modified_files():checker=%s', $checker);
             my @violations;
+            my $active = $config->{'critic'}->{'active'}->[0];
+            $log->debugf( __PACKAGE__ . q{::} . 'check_new_or_modified_files():active=%s', $active);
+            next if( ! $active );
+
+            if( ! defined $checker->{'cache'} ) {
+                $checker->{'cache'} = &{ $checker->{'f_pre'} }( $git );
+            }
             if( $checker->{'input'} eq q{FILE_CONTENT} ) {
-                # Source code should only be passed to PPI::Document->new as a SCALAR reference
-                @violations = $critic->critique( \$content );
+                @violations = &{$checker->{'f_do'}}(
+                    $git, $commit, $checker->{'cache'}, $content, $filename
+                    );
             } else {
-                # Save file to /tmp dir. Not implemented
+                # TODO Save file to /tmp dir. Not implemented!
             }
             $log->debugf( __PACKAGE__ . q{::}
                 . 'check_new_or_modified_files():file=%s, violations=%s', $filename, \@violations);
 
             # Report errors
             foreach my $violation (@violations) {
-                $git->fault($checker->{'name'} . "] error in file '$filename':\n" . $violation,
+                $git->fault($checker->{'name'} . " error in file '$filename':\n" . $violation,
                     {prefix => 'CheckPerl', commit => $commit});
                 ++$errors;
             }
