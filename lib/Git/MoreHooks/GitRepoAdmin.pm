@@ -2,8 +2,6 @@ package Git::MoreHooks::GitRepoAdmin;
 
 ## no critic (InputOutput::RequireCheckedSyscalls)
 ## no critic (ValuesAndExpressions::ProhibitMagicNumbers)
-## no critic (Documentation::RequirePodAtEnd)
-## no critic (Documentation::RequirePodSections)
 ## no critic (ValuesAndExpressions::RequireInterpolationOfMetachars)
 ## no critic (ControlStructures::ProhibitPostfixControls)
 
