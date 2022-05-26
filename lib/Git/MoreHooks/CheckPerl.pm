@@ -32,7 +32,7 @@ interface (git config file).
 =head1 DESCRIPTION
 
 This plugin allows user to check committed Perl files 
-with different static analysis tool for Perl source code.
+with different static analysis tools for Perl source code.
 Currently supported is only L<Perl::Critic>.
 Future support is planned for L<B::Lint> and running
 syntax check command F<perl -c>.
@@ -57,12 +57,14 @@ to add it to the githooks.plugin configuration option:
 
     git config --add githooks.plugin Git::MoreHooks::CheckPerl
 
-This plugin hooks itself to the hooks below:
+This plugin hooks itself to the following hooks:
 
 =over
 
-=for comment
+
+=for :comment
 The following hooks are associated to Hook Driver GITHOOKS_CHECK_PRE_COMMIT.
+
 
 =item * B<pre-commit>
 
@@ -76,6 +78,7 @@ is applied but before a commit is made.
 
 =for :comment
 The following hooks are associated to Hook Driver GITHOOKS_CHECK_AFFECTED_REFS.
+
 
 =item * B<commit-received>
 
@@ -104,6 +107,22 @@ It allows the submit to be rejected.
 This hook is invoked multiple times in the remote repository during
 C<git push>, once per branch being updated.
 
+
+=for :comment
+The following hooks are associated to Hook Driver GITHOOKS_CHECK_PATCHSET.
+
+
+=item * B<draft-published>
+
+The B<draft-published> hook is executed when the user publishes a draft
+change, making it visible to other users.
+
+=item * B<patchset-created>
+
+The B<patchset-created> hook is executed asynchronously when a user
+performs a push to one of Gerrit's virtual branches (refs/for/*) in
+order to record a new review request.
+
 =back
 
 
@@ -111,13 +130,16 @@ C<git push>, once per branch being updated.
 
 This plugin is configured by the following git options.
 
+
 =head3 githooks.checkperl.use-temp-files BOOL
 
 Whenever a checker supports it, files are not written
 to a temporary folder for checking. Instead they are extracted
 from Git and fed directly as scalar variables to a checker
-tool. If you want the checker to read a file instead,
+tool. If you want the checkers to read a file instead,
 set this config item to "1". Default is "0".
+
+B<N.B. This config option is not yet implemented>!
 
 
 =head3 githooks.checkperl.name PATTERN
@@ -165,7 +187,7 @@ Default is true ("1").
 If you have committed a Perl::Critic configuration file (profile)
 to the repo, you can specify here where it is.
 There is no default value.
-The value must have the following pattern: "ref name:file name".
+The value must have the following pattern: "<ref name>:<file name>".
 E.g.
 
     [githooks "checkperl.critic"]
@@ -201,6 +223,7 @@ E.g.
         verbose      = 11
         allow-unsafe = 0
 
+B<N.B. This config option is not yet implemented>!
 
 =head1 EXPORTS
 
