@@ -128,6 +128,20 @@ order to record a new review request.
 
 =back
 
+=head2 Additional Dependencies
+
+You need to install separately the dependencies needed
+for using different checkers.
+
+=head3 Perl::Critic
+
+=over
+
+=item Perl::Critic
+
+=back
+
+
 
 =head1 CONFIGURATION
 
@@ -272,7 +286,7 @@ L<Git::Hooks> package.
 
 # use Git::MoreHooks::CheckCommitBase \&do_hook;
 
-use Git::Hooks 2.008000;
+use Git::Hooks 3.000000;
 use Path::Tiny;
 use Log::Any qw{$log};
 # use Params::Validate qw(:all);
@@ -357,8 +371,8 @@ sub _set_critic {
     $log->tracef( __PACKAGE__ . q{::} . '_set_critic():pc_rc_filename=%s', $pc_rc_filename);
 
     load 'Perl::Critic';
-    load 'Perl::Critic::Violation';
     load 'Perl::Critic::Utils';
+    load 'Perl::Critic::Violation';
 
     my @critic_cfg_props = qw( severity theme top only force verbose allow-unsafe );
     my @critic_cfg_list_props = qw( include exclude );
