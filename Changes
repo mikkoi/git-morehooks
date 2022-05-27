@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * New hook CheckPerl.
+                - Supports only Perl::Critic for now.
 
 0.014     2022-05-17 22:38:18+02:00 Europe/Stockholm
 
