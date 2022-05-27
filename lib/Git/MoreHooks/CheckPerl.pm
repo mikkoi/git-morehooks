@@ -21,7 +21,7 @@ Package Git::MoreHooks is currently being developed so changes in the existing h
 =head1 SYNOPSIS
 
 Use package via
-L<Git::Hooks|Git::Hooks>
+L<Git::Hooks>
 interface (git config file).
 
 =for Pod::Coverage check_commit_at_client check_commit_at_server
@@ -59,12 +59,11 @@ to add it to the githooks.plugin configuration option:
 
 This plugin hooks itself to the following hooks:
 
-=over
-
 
 =for :comment
 The following hooks are associated to Hook Driver GITHOOKS_CHECK_PRE_COMMIT.
 
+=over
 
 =item * B<pre-commit>
 
@@ -75,10 +74,12 @@ This hook is invoked during the commit.
 This hook is invoked during the email-based workflow after a patch
 is applied but before a commit is made.
 
+=back
 
 =for :comment
 The following hooks are associated to Hook Driver GITHOOKS_CHECK_AFFECTED_REFS.
 
+=over
 
 =item * B<commit-received>
 
@@ -107,10 +108,12 @@ It allows the submit to be rejected.
 This hook is invoked multiple times in the remote repository during
 C<git push>, once per branch being updated.
 
+=back
 
 =for :comment
 The following hooks are associated to Hook Driver GITHOOKS_CHECK_PATCHSET.
 
+=over
 
 =item * B<draft-published>
 
@@ -159,8 +162,8 @@ their extensions, for example:
     [githooks "checkperl"]
         name = *.pl
 
-If you need more power than globs can provide you can match using L<regular
-expressions|http://perldoc.perl.org/perlre.html>, using the C<qr//>
+If you need more power than globs can provide you can match using
+L<regular expressions|http://perldoc.perl.org/perlre.html>, using the C<qr//>
 operator, for example:
 
     [githooks "checkperl"]
@@ -208,7 +211,7 @@ You can alternatively set all the values
 in the configuration but if B<profile> is set, they are ignored.
 
 Please consult to
-L<Perl::Critic|https://metacpan.org/pod/Perl::Critic#CONSTRUCTOR>
+L<Perl::Critic|Perl::Critic/"CONSTRUCTOR">
 for further information.
 
 All the values in this section will be used when providing
@@ -252,17 +255,18 @@ arguments passed to the hook by Gerrit.
 
 =over
 
-=item L<Git::Hooks|Git::Hooks>
+=item L<Git::Hooks>
 
-=item L<Perl::Critic|Perl::Critic>
+=item L<Perl::Critic>
 
 =item Alternative way to use Perl::Critic with Git::Hooks package: L<Git::Hooks::CheckFile|Git::Hooks::CheckFile/"CONFIGURATION">.
 
+=back
 
 =head1 NOTES
 
 Thanks go to Gustavo Leite de Mendonça Chaves for his
-L<Git::Hooks|https://metacpan.org/pod/Git::Hooks> package.
+L<Git::Hooks> package.
 
 =cut
 
@@ -442,8 +446,7 @@ sub check_new_or_modified_files {
     my $config = $git->get_config( $CFG );
     $log->tracef( __PACKAGE__ . q{::} . 'check_new_or_modified_files():config=%s', $config);
     my @name_patterns;
-    foreach my $check (@{ $config->{'name'} }) {
-        my ($pattern, $command) = split q{ }, $check, 2;
+    foreach my $pattern (@{ $config->{'name'} }) {
         # TODO Refactor regex.
         ## no critic (RegularExpressions::RequireDotMatchAnything)
         ## no critic (RegularExpressions::RequireExtendedFormatting)
