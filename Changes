@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.016     2022-05-29 19:19:41+02:00 Europe/Stockholm
             * Fix cpanfile and isolate additional dependencies
                 to features.
             * Use Test2::Require::Module to bail out of tests
