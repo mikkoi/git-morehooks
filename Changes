@@ -1,6 +1,12 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Fix cpanfile and isolate additional dependencies
+                to features.
+            * Use Test2::Require::Module to bail out of tests
+                if feature deps are not installed
+            * Use Test::Requires::Git to bail out of test
+                if requires a newer version of `git`.
 
 0.015     2022-05-27 11:28:03+02:00 Europe/Stockholm
             * New hook CheckPerl.
