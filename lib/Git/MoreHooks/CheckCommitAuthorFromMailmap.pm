@@ -96,6 +96,19 @@ making it visible to other users.
 
 =back
 
+=head2 Additional Dependencies
+
+You need to install separately the dependencies needed
+for using this hook.
+
+=over
+
+=item Git::Mailmap
+
+=back
+
+
+
 =head1 CONFIGURATION
 
 This plugin is configured by the following git options.
@@ -213,7 +226,7 @@ In the B<pre-commit> hook we want to read a file in the working directory.
 use Git::Hooks 3.000000;
 use Path::Tiny;
 use Log::Any qw{$log};
-require Git::Mailmap;
+use Module::Load qw{ load };
 
 my $PKG = __PACKAGE__;
 my ($CFG) = __PACKAGE__ =~ /::([^:]+)$/msx;
@@ -279,6 +292,18 @@ sub _check_mailmap {
     my ( $git, $commit, $author_name, $author_email ) = @_;
 
     my $errors            = 0;
+    eval {
+        load 'Git::Mailmap';
+        1; # To cover the fact that operation correctly returns a false value.
+    } or do {
+        $log->errorf( __PACKAGE__ . q{::}
+            . '_set_critic():Cannot load Git::Mailmap'
+        );
+        $git->fault( 'Cannot load Git::Mailmap', { prefix => $PKG, commit => $commit } );
+        ++$errors;
+        return $errors;
+    };
+
     my $author            = $author_name . q{ } . $author_email;
     my $mailmap           = Git::Mailmap->new();
     my $mailmap_as_string = $git->run( 'cat-file', '-p', 'HEAD:.mailmap' );
