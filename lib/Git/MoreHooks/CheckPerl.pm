@@ -289,7 +289,6 @@ L<Git::Hooks> package.
 use Git::Hooks 3.000000;
 use Path::Tiny;
 use Log::Any qw{$log};
-# use Params::Validate qw(:all);
 use Module::Load qw{ load };
 use Text::Glob qw{ glob_to_regex };
 use List::MoreUtils qw( any );
@@ -367,12 +366,20 @@ sub _set_critic {
     my ($git) = @_;
     my $cfg_section = $CFG . q{.} . 'critic';
 
+    eval {
+        load 'Perl::Critic';
+        load 'Perl::Critic::Utils';
+        load 'Perl::Critic::Violation';
+        1; # To cover the fact that operation correctly returns a false value.
+    } or do {
+        $log->errorf( __PACKAGE__ . q{::}
+            . '_set_critic():Cannot load Perl::Critic'
+        );
+        return { 'error' => 'Cannot load Perl::Critic' };
+    };
+
     my $pc_rc_filename = $git->get_config( $cfg_section => 'profile');
     $log->tracef( __PACKAGE__ . q{::} . '_set_critic():pc_rc_filename=%s', $pc_rc_filename);
-
-    load 'Perl::Critic';
-    load 'Perl::Critic::Utils';
-    load 'Perl::Critic::Violation';
 
     my @critic_cfg_props = qw( severity theme top only force verbose allow-unsafe );
     my @critic_cfg_list_props = qw( include exclude );
@@ -498,6 +505,11 @@ sub check_new_or_modified_files {
 
             if( ! defined $checker->{'cache'} ) {
                 $checker->{'cache'} = &{ $checker->{'f_pre'} }( $git );
+            }
+            if( defined $checker->{'cache'}->{'error'} ) {
+                $git->fault($checker->{'name'} . ' Error: ' . $checker->{'cache'}->{'error'});
+                ++$errors;
+                return $errors;
             }
             if( $checker->{'input'} eq q{FILE_CONTENT} ) {
                 @violations = &{$checker->{'f_do'}}(
