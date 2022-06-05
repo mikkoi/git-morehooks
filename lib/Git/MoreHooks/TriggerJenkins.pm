@@ -1,6 +1,3 @@
-## no critic (Documentation::PodSpelling)
-## no critic (Documentation::RequirePodAtEnd)
-## no critic (Documentation::RequirePodSections)
 # no critic (ValuesAndExpressions::RequireInterpolationOfMetachars)
 ## no critic (InputOutput::RequireCheckedSyscalls)
 #
@@ -221,6 +218,7 @@ Cxense Sweden AB's permission.
 =cut
 
 use Git::Hooks 3.000000;
+use Module::Load qw{ load };
 use Path::Tiny;
 use Log::Any qw{$log};
 use Carp;
@@ -265,7 +263,8 @@ sub setup_config {
 
 sub configure_a_new_job {
     my ( $git, $tpl_filename, %template_vars ) = @_;
-    if ( !eval { require Template; } ) {
+    # if ( !eval { require Template; } ) {
+    if ( !eval { load 'Template'; 1; } ) {
         $git->error( $PKG, 'Install Module Template (package Template-Toolkit)' . ' to use this plugin!' );
         return;
     }
@@ -470,7 +469,7 @@ sub handle_affected_refs {
     # Connect to Jenkins if not already connected. Check from cache.
     my $cache = $git->cache($PKG);
     if ( !exists $cache->{'jenkins'} ) {
-        if ( !eval { require Jenkins::API; } ) {
+        if ( !eval { load 'Jenkins::API'; } ) {
             $git->error( $PKG, 'Install Module Jenkins::API to use this plugin!' );
             return;
         }
