@@ -316,7 +316,7 @@ sub _check_mailmap {
     }
 
     # 2) Config variable mailmap.file
-    my $mapfile_location = $git->get_config( 'mailmap.' => 'file' );
+    my $mapfile_location = $git->get_config( 'mailmap' => 'file' );
     if ( defined $mapfile_location ) {
         if ( -e $mapfile_location ) {
             my $file_as_str = Path::Tiny->file($mapfile_location)->slurp_utf8;
@@ -330,7 +330,7 @@ sub _check_mailmap {
     }
 
     # 3) Config variable mailmap.blob
-    my $mapfile_blob = $git->get_config( 'mailmap.' => 'blob' );
+    my $mapfile_blob = $git->get_config( 'mailmap' => 'blob' );
     if ( defined $mapfile_blob ) {
         if ( my $blob_as_str = $git->command( 'cat-file', '-p', $mapfile_blob ) ) {
             $mailmap->from_string( 'mailmap' => $blob_as_str );
