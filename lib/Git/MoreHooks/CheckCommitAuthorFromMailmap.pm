@@ -225,6 +225,7 @@ In the B<pre-commit> hook we want to read a file in the working directory.
 
 use Git::Hooks 3.000000;
 use Path::Tiny;
+use Try::Tiny;
 use Log::Any qw{$log};
 use Module::Load qw{ load };
 
@@ -304,11 +305,13 @@ sub _check_mailmap {
         return $errors;
     };
 
+    # TODO Move config checking to _setup_config() or elsewhere so it can break early on.
     my $author            = $author_name . q{ } . $author_email;
     my $mailmap           = Git::Mailmap->new();
-    my $mailmap_as_string = $git->run( 'cat-file', '-p', 'HEAD:.mailmap' );
-
-    # TODO Move config checking to _setup_config() or elsewhere so it can break early on.
+    my $mailmap_as_string;
+    try {
+        $mailmap_as_string = $git->run( 'cat-file', '-p', 'HEAD:.mailmap' );
+    };
     if ( defined $mailmap_as_string ) {
         $mailmap->from_string( 'mailmap' => $mailmap_as_string );
         $log->debugf( __PACKAGE__ . q{::} . '_check_mailmap(): HEAD:.mailmap read in.' . ' Content from Git::Mailmap:\n%s',
@@ -332,7 +335,11 @@ sub _check_mailmap {
     # 3) Config variable mailmap.blob
     my $mapfile_blob = $git->get_config( 'mailmap' => 'blob' );
     if ( defined $mapfile_blob ) {
-        if ( my $blob_as_str = $git->command( 'cat-file', '-p', $mapfile_blob ) ) {
+        my $blob_as_str;
+        try {
+            $blob_as_str = $git->run( 'cat-file', '-p', $mapfile_blob );
+        };
+        if ( defined $blob_as_str ) {
             $mailmap->from_string( 'mailmap' => $blob_as_str );
             $log->debugf( __PACKAGE__ . q{::} . '_check_mailmap(): mailmap.blob (%s) read in.' . ' Content from Git::Mailmap:\n%s',
                 $mapfile_blob, $mailmap->to_string() );
