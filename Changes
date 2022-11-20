@@ -2,6 +2,8 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
 
+0.018     2022-11-20 16:55:56+01:00 Europe/Stockholm
+
 0.017     2022-06-06 01:22:58+02:00 Europe/Stockholm
             * Use Module::Load to load Git::Mailmap. Report error if cannot load, not just crash.
             * Use Module::Load to load Perl::Critic. Report error if cannot load, not just crash.
