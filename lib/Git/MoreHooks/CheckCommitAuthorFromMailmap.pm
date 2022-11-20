@@ -328,7 +328,10 @@ sub _check_mailmap {
                 $mapfile_location, $mailmap->to_string() );
         }
         else {
-            $git->fault( 'Config variable \'mailmap.file\' does not point to a file.', { prefix => $PKG, commit => $commit } );
+            $git->fault( (sprintf 'Config variable \'mailmap.file\' (value: %s) does not point to a file.', $mapfile_location),
+                { prefix => $PKG, commit => $commit }
+            );
+            ++$errors;
         }
     }
 
@@ -345,7 +348,9 @@ sub _check_mailmap {
                 $mapfile_blob, $mailmap->to_string() );
         }
         else {
-            $git->fault( 'Config variable \'mailmap.blob\' does not point to a file.', { prefix => $PKG, commit => $commit } );
+            $git->fault( (sprintf 'Config variable \'mailmap.blob\' (value: %s) does not point to a file.', $mapfile_blob),
+                { prefix => $PKG, commit => $commit }
+            );
             ++$errors;
         }
     }
