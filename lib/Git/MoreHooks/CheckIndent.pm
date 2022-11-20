@@ -343,7 +343,10 @@ sub handle_file {
                 'exceptions'     => [values %exceptions],
             );
             foreach my $row_nr (keys %results) {
-                $git->error( $PKG, "Indent error ($commit, $filename:$row_nr): '$results{$row_nr}'" );
+                $git->fault( (sprintf 'Indent error (%s:%s): \'%s\'',
+                        $filename, $row_nr, $results{$row_nr}),
+                    { prefix => $PKG, commit => $commit }
+                );
                 $errors++;
             }
             last;
