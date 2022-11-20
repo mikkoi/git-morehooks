@@ -319,7 +319,7 @@ sub _check_mailmap {
     my $mapfile_location = $git->get_config( 'mailmap' => 'file' );
     if ( defined $mapfile_location ) {
         if ( -e $mapfile_location ) {
-            my $file_as_str = Path::Tiny->file($mapfile_location)->slurp_utf8;
+            my $file_as_str = path($mapfile_location)->slurp_utf8;
             $mailmap->from_string( 'mailmap' => $file_as_str );
             $log->debugf( __PACKAGE__ . q{::} . '_check_mailmap(): mailmap.file (%s) read in.' . ' Content from Git::Mailmap:\n%s',
                 $mapfile_location, $mailmap->to_string() );
