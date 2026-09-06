@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Add ScanCtags.
 
 0.018     2022-11-20 16:55:56+01:00 Europe/Stockholm
 
