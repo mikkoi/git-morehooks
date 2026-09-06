@@ -1,4 +1,4 @@
-package Git::Hooks::ScanCtags;
+package Git::MoreHooks::ScanCtags;
 
 use strict;
 use warnings;
