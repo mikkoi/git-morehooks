@@ -1,0 +1,51 @@
+---
+snippets:
+    license: |
+        # LICENSE
+
+        This software is copyright (c) 2026 by [% dist.author %].
+
+        This is free software; you can redistribute it and/or modify it under
+        the same terms as the Perl 5 programming language system itself.
+
+        Terms of the Perl programming language system itself:
+
+        a) the GNU General Public License as published by the Free
+           Software Foundation; either version 1, or (at your option) any
+           later version, or
+        b) the "Artistic License"
+
+        The complete licenses are in the files LICENSE-Artistic-2.0 and LICENSE-GPL-3
+        within this repository. If these files are missing, they can be downloaded
+        from the following urls:
+
+            * https://www.gnu.org/licenses/
+            * https://www.perlfoundation.org/artistic-license-20.html
+    badges: |
+        [![License: Artistic-2.0](https://img.shields.io/badge/License-Perl-0298c3.svg)](https://opensource.org/licenses/Artistic-2.0)
+        [![CPAN Version](https://img.shields.io/cpan/v/Git-MoreHooks)](https://metacpan.org/dist/Git-MoreHooks)
+        [![kwalitee](https://cpants.cpanauthors.org/dist/Git-MoreHooks.svg)](https://cpants.cpanauthors.org/dist/Git-MoreHooks)
+        [![codecov](https://codecov.io/gh/mikkoi/git-morehooks/graph/badge.svg?token=WSOLKXXEVK)](https://codecov.io/gh/mikkoi/git-morehooks)
+        [![Coverage Status](https://coveralls.io/repos/github/mikkoi/git-morehooks/badge.svg?branch=add-codecov-report)](https://coveralls.io/github/mikkoi/git-morehooks?branch=add-codecov-report)
+        [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/mikkoi/git-morehooks)
+        [![GH Actions: Linux Build](https://github.com/mikkoi/git-morehooks/actions/workflows/linux.yml/badge.svg?event=push&branch=main)](https://github.com/mikkoi/git-morehooks/actions/workflows/linux.yml)
+        [![GH Actions: Windows Build](https://github.com/mikkoi/git-morehooks/actions/workflows/windows.yml/badge.svg?event=push&branch=main)](https://github.com/mikkoi/git-morehooks/actions/workflows/windows.yml)
+files:
+    "README.md": |
+        [% snippets.badges -%]
+
+        # [% dist.name %]
+
+        [% dist.abstract %]
+
+
+        [% pod("Git::MoreHooks", "VERSION") %]
+
+
+        [% pod("Git::MoreHooks", "SYNOPSIS") %]
+
+
+        [% pod("Git::MoreHooks", "DESCRIPTION") %]
+
+
+        [% snippets.license %]
