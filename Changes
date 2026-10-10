@@ -1,6 +1,11 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * GitRepoAdmin: a repository with no .git-repo-admin directory no
+                longer throws. The state means the hooks are not installed
+                there yet, which reaches every clone before anybody runs
+                client-hooks.sh --install, and this plugin runs from
+                post-merge, so throwing meant git pull died.
 
 0.019     2026-09-06 22:37:51+02:00 Europe/Stockholm
             * Add ScanCtags.
