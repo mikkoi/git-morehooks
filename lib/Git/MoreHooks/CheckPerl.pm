@@ -31,7 +31,7 @@ interface (git config file).
 
 =head1 DESCRIPTION
 
-This plugin allows user to check committed Perl files 
+This plugin allows user to check committed Perl files
 with different static analysis tools for Perl source code.
 Currently supported is only L<Perl::Critic>.
 Future support is planned for L<B::Lint> and running
