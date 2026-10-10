@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Reactivate pod-spell stopwords in dist.ini.
             * Remove B::Lint check from CheckPerl. It was never active.
             * Disable synopsis checking in ScanCtags.
             * Remove specific Perl version dependency from ScanCtags.
