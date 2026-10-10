@@ -1,6 +1,10 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Add CheckTrailers. Enforces a commit message trailer policy:
+                a deny list, a require list and an optional required order.
+                Ships with no trailer names configured and does nothing until
+                a repository names its own.
             * GitRepoAdmin: a repository with no .git-repo-admin directory no
                 longer throws. The state means the hooks are not installed
                 there yet, which reaches every clone before anybody runs
