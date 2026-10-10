@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Update README.md .weavefilerc.
             * Update Contribution policy.
             * Add Software::Policies / MaintainerSuccession.
             * Add CheckTrailers. Enforces a commit message trailer policy:
