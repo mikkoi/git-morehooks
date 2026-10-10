@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Convert dist.ini to use @MIKKOI bundle.
             * Configure Perl requirements.
             * Add GitHub Actions workflows and dependabot.
             * Update README.md .weavefilerc.
