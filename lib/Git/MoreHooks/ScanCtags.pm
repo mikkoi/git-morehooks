@@ -12,7 +12,7 @@ use 5.030;
 use utf8;
 use Carp     qw( croak );
 use Log::Any qw( $log );
-use Git::Hooks 4.0;
+use Git::Hooks;
 use Git::Repository::Log;
 use File::Find   qw(find);
 use List::Util   qw( any );

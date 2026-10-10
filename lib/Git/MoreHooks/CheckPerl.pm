@@ -4,7 +4,6 @@ package Git::MoreHooks::CheckPerl;
 
 use strict;
 use warnings;
-use 5.016000;
 use utf8;
 
 # ABSTRACT: Check committed files for Perl::Critic correctness.
@@ -286,7 +285,7 @@ L<Git::Hooks> package.
 
 # use Git::MoreHooks::CheckCommitBase \&do_hook;
 
-use Git::Hooks 3.000000;
+use Git::Hooks;
 use Path::Tiny;
 use Log::Any qw{$log};
 use Module::Load qw{ load };

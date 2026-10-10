@@ -217,7 +217,7 @@ Cxense Sweden AB's permission.
 
 =cut
 
-use Git::Hooks 3.000000;
+use Git::Hooks;
 use Module::Load qw{ load };
 use Path::Tiny;
 use Log::Any qw{$log};

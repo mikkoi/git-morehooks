@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Remove Git::Hooks version dependency from libs and add to dist.ini.
             * Remove whitespace in EOL in CheckPerl.
             * Convert dist.ini to use @MIKKOI bundle.
             * Configure Perl requirements.
