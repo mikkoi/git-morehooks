@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Add GitHub Actions workflows and dependabot.
             * Update README.md .weavefilerc.
             * Update Contribution policy.
             * Add Software::Policies / MaintainerSuccession.
