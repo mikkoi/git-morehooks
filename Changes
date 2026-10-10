@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Configure Perl requirements.
             * Add GitHub Actions workflows and dependabot.
             * Update README.md .weavefilerc.
             * Update Contribution policy.
