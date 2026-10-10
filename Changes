@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Remove literal tabs from test file.
             * Remove unused sub arguments in ScanCtags.
             * Remove `say` from ScanCtags.
             * Reactivate pod-spell stopwords in dist.ini.
