@@ -217,7 +217,7 @@ Cxense Sweden AB's permission.
 
 =cut
 
-use Git::Hooks 3.000000;
+use Git::Hooks;
 use Module::Load qw{ load };
 use Path::Tiny;
 use Log::Any qw{$log};
@@ -335,6 +335,7 @@ sub trigger_branch {
         my $xml_conf = configure_a_new_job( $git, $job_names{$job_name}, %job_info );
         $log->debugf( 'New job: %s', $xml_conf );
         $this_job = $jenkins->create_job( $job_name, $xml_conf );
+        $log->debugf( 'Created job: %s', $this_job );
 
         # Trigger build
         my $triggered = $jenkins->trigger_build($job_name);

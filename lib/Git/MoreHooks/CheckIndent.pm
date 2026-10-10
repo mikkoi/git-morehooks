@@ -148,7 +148,7 @@ L<Git::Hooks|https://metacpan.org/pod/Git::Hooks> package.
 
 use Git::MoreHooks::CheckCommitBase \&do_hook;
 
-use Git::Hooks 3.000000;
+use Git::Hooks;
 use Path::Tiny;
 use Log::Any qw{$log};
 use Params::Validate qw(:all);

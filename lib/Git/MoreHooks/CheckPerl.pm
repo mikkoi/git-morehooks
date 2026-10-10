@@ -4,7 +4,6 @@ package Git::MoreHooks::CheckPerl;
 
 use strict;
 use warnings;
-use 5.016000;
 use utf8;
 
 # ABSTRACT: Check committed files for Perl::Critic correctness.
@@ -31,10 +30,10 @@ interface (git config file).
 
 =head1 DESCRIPTION
 
-This plugin allows user to check committed Perl files 
+This plugin allows user to check committed Perl files
 with different static analysis tools for Perl source code.
 Currently supported is only L<Perl::Critic>.
-Future support is planned for L<B::Lint> and running
+Future support is planned for running
 syntax check command F<perl -c>.
 
 There are other ways to run Perl::Critic, such as simply running
@@ -286,7 +285,7 @@ L<Git::Hooks> package.
 
 # use Git::MoreHooks::CheckCommitBase \&do_hook;
 
-use Git::Hooks 3.000000;
+use Git::Hooks;
 use Path::Tiny;
 use Log::Any qw{$log};
 use Module::Load qw{ load };
@@ -323,15 +322,11 @@ sub _setup_config {
     $default->{'name'} //= ['*.p[lm]', '*.psgi', '*.t'];
 
     $default->{'critic'} //= {};
-    $default->{'b-lint'} //= {};
     $default->{'perl-c'} //= {};
 
     # Perl::Critic
     $default->{'critic'}->{'active'} //= ['true'];
     $default->{'critic'}->{'profile'} //= [];
-
-    # B::Lint
-    $default->{'b-lint'}->{'active'} //= ['true'];
 
     # Perl -c
     $default->{'perl-c'}->{'active'} //= [0];
