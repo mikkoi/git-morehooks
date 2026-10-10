@@ -41,7 +41,7 @@ sub _setup_config {
 ##########
 
 sub update_tags_file {
-    my ( $git, $prev_head_ref, $new_head_ref, $is_branch_checkout ) = @_;
+    my ( $git, ) = @_;
 
     _setup_config($git);
 
