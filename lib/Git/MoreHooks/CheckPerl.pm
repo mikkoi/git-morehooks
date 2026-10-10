@@ -33,7 +33,7 @@ interface (git config file).
 This plugin allows user to check committed Perl files
 with different static analysis tools for Perl source code.
 Currently supported is only L<Perl::Critic>.
-Future support is planned for L<B::Lint> and running
+Future support is planned for running
 syntax check command F<perl -c>.
 
 There are other ways to run Perl::Critic, such as simply running
@@ -322,15 +322,11 @@ sub _setup_config {
     $default->{'name'} //= ['*.p[lm]', '*.psgi', '*.t'];
 
     $default->{'critic'} //= {};
-    $default->{'b-lint'} //= {};
     $default->{'perl-c'} //= {};
 
     # Perl::Critic
     $default->{'critic'}->{'active'} //= ['true'];
     $default->{'critic'}->{'profile'} //= [];
-
-    # B::Lint
-    $default->{'b-lint'}->{'active'} //= ['true'];
 
     # Perl -c
     $default->{'perl-c'}->{'active'} //= [0];
