@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Disable synopsis checking in ScanCtags.
             * Remove specific Perl version dependency from ScanCtags.
             * Remove Git::Hooks version dependency from libs and add to dist.ini.
             * Remove whitespace in EOL in CheckPerl.

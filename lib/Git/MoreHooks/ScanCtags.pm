@@ -137,32 +137,34 @@ Git::MoreHooks::CreateTags - Git::Hooks plugin to create or update tags file
 As a C<Git::Hooks> plugin you don't use this Perl module directly. Instead, you
 may configure it in a Git configuration file like this:
 
-  [githooks]
+=for test_synopsis BEGIN { die "SKIP: Git config below."; }
 
-    # Enable the plugin
-    plugin = Git::MoreHooks::ScanCtags
+    [githooks]
 
-  [githooks "scanctags"]
-    # Default values underneath:
+        # Enable the plugin
+        plugin = Git::MoreHooks::ScanCtags
 
-    # Outfile (tags) name
-    tags = tags
+    [githooks "scanctags"]
+        # Default values underneath:
 
-    # Directories to scan
-    dir = lib
-    dir = bin
-    dir = t
+        # Outfile (tags) name
+        tags = tags
 
-    # File types (by suffix) to scan (in above dirs)
-    suffix = pm
-    suffix = pl
-    suffix = t
+        # Directories to scan
+        dir = lib
+        dir = bin
+        dir = t
 
-    # Scan all executable files (in above dirs)
-    executable = 1
+        # File types (by suffix) to scan (in above dirs)
+        suffix = pm
+        suffix = pl
+        suffix = t
 
-    # verbose
-    verbose = 1
+        # Scan all executable files (in above dirs)
+        executable = 1
+
+        # verbose
+        verbose = 1
 
 
 =head1 DESCRIPTION
