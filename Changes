@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Add Software::Policies / MaintainerSuccession.
             * Add CheckTrailers. Enforces a commit message trailer policy:
                 a deny list, a require list and an optional required order.
                 Ships with no trailer names configured and does nothing until
