@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Remove dependency to perl 5.030.
             * Remove literal tabs from test file.
             * Remove unused sub arguments in ScanCtags.
             * Remove `say` from ScanCtags.
