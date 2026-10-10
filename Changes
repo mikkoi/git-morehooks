@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Remove Test::DistManifest because .test.requires.git.lock file.
             * Remove dependency to perl 5.030.
             * Remove literal tabs from test file.
             * Remove unused sub arguments in ScanCtags.
