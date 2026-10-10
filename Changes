@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.020     2026-10-11 00:32:16+02:00 Europe/Stockholm
             * Add Git::Mailmap to TestSuggests prereqs.
             * Add more debugging to TriggerJenkins.
             * Remove Test::DistManifest because .test.requires.git.lock file.
