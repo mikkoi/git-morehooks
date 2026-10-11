@@ -131,7 +131,7 @@ L<Git::Hooks|https://metacpan.org/pod/Git::Hooks> package.
 
 =cut
 
-use Git::Hooks;
+use Git::Hooks 2.014000;    # v2.14.0: oldest release on CPAN
 use Path::Tiny;
 use Log::Any qw{$log};
 use Params::Validate qw(:all);
