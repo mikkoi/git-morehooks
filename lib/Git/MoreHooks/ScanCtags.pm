@@ -10,7 +10,7 @@ use warnings;
 use utf8;
 use Carp     qw( croak );
 use Log::Any qw( $log );
-use Git::Hooks;
+use Git::Hooks 2.014000;    # v2.14.0: oldest release on CPAN
 use Git::Repository::Log;
 use File::Find   qw(find);
 use List::Util   qw( any );

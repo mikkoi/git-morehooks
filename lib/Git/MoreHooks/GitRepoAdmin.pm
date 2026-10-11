@@ -134,7 +134,7 @@ No known bugs.
 
 =cut
 
-use Git::Hooks;
+use Git::Hooks 2.014000;    # v2.14.0: oldest release on CPAN
 use English qw( -no_match_vars );
 use Path::Tiny;
 use Cwd;
