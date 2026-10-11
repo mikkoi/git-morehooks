@@ -1,5 +1,5 @@
 # At least this Perl version (can be higher):
-requires 'perl', '5.016';
+requires 'perl', '5.030';
 
 on runtime => sub {
     requires 'Git::Hooks', '>= 4.000000';
