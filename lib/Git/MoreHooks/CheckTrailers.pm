@@ -11,7 +11,7 @@ use utf8;
 use Encode   qw( encode );
 use English  qw( -no_match_vars );
 use Log::Any qw( $log );
-use Git::Hooks;
+use Git::Hooks 4.0;
 use List::Util qw( any first );
 use Path::Tiny qw( path );
 
