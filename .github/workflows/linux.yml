@@ -25,8 +25,8 @@ jobs:
         perl-version:
           - 'latest'
           - '5.40'
-          - '5.34'
-          - '5.28'
+          # - '5.34' Too old Git version
+          # - '5.28' Too old Git version
           # - '5.20' No dzil
           # - '5.18' No dzil
           # - '5.16' No dzil
