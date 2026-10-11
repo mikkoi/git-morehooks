@@ -10,6 +10,8 @@ on runtime => sub {
 };
 on test => sub {
     requires 'Test2';
+    requires 'Test2::V0';
+    requires 'Test2::V1', '>= 1.302225';
     requires 'Test::CPAN::Meta';
     requires 'Test::Pod::Coverage';
     requires 'Pod::Coverage::TrustPod';
