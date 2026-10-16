@@ -1,6 +1,10 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Add CheckNonASCII, a plugin which reports characters outside
+                ASCII in the files a commit touches, and in their names.
+                The purpose is Unicode attacks -- bidirectional overrides,
+                invisible characters, homoglyphs -- not tidiness.
             * CheckTrailers: the once-only report of an interpret-trailers
                 failure is held per repository, not in a package variable,
                 so a second repository handled by the same interpreter is
