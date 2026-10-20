@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Add Text::Glob to cpanfile.
             * Add CheckNonASCII, a plugin which reports characters outside
                 ASCII in the files a commit touches, and in their names.
                 The purpose is Unicode attacks -- bidirectional overrides,

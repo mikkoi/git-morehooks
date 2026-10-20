@@ -7,6 +7,7 @@ on runtime => sub {
     requires 'Const::Fast';
     requires 'Path::Tiny';
     requires 'Params::Validate';
+    requires 'Text::Glob';
 };
 on test => sub {
     requires 'Test2';
