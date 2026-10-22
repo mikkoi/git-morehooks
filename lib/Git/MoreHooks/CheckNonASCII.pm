@@ -30,8 +30,8 @@ const my $ASCII_MAX => 0x7f;
 
 # Above this, a blob is left unread. Deliberately far above any source file:
 # the point is to avoid slurping something enormous, not to have an opinion
-# about size. See "max-size" in the documentation for what it costs.
-const my $DEFAULT_MAX_SIZE => 5 * 1024 * 1024;
+# about size. See "sizelimit" in the documentation for what it costs.
+const my $DEFAULT_SIZELIMIT => 5 * 1024 * 1024;
 
 # Said at most once per process, however many files a commit or push skips:
 # the point is to be noticed, not to scroll.
@@ -54,10 +54,11 @@ sub _setup_config {
     # No default patterns. Unset 'name' means every file, because the rule this
     # plugin exists for is repository-wide; 'skip' is how a repository carves
     # out the files where non-ASCII is the point.
-    $default->{'name'}       //= [];
-    $default->{'skip'}       //= [];
-    $default->{'max-report'} //= [$DEFAULT_MAX_REPORT];
-    $default->{'max-size'}   //= [$DEFAULT_MAX_SIZE];
+    $default->{'name'}                           //= [];
+    $default->{'skip'}                           //= [];
+    $default->{'max-report'}                     //= [$DEFAULT_MAX_REPORT];
+    $default->{'sizelimit'}                      //= [$DEFAULT_SIZELIMIT];
+    $default->{'no-warning-when-over-sizelimit'} //= [0];
 
     return;
 }
@@ -170,25 +171,26 @@ sub _describe {
 # shows a successful hook's standard error to the user, which was verified
 # rather than assumed.
 sub _announce_size_gap {
-    my ( $git, $filename, $size, $max_size ) = @_;
+    my ( $git, $filename, $size, $our_limit ) = @_;
 
     return if $announced_size_gap;
+    return if $git->get_config_boolean( $CFG => 'no-warning-when-over-sizelimit' );
 
     # 0, or unset, is CheckFile's default and means it imposes no limit at all.
-    my $sizelimit = $git->get_config_integer( 'githooks.checkfile' => 'sizelimit' ) // 0;
-    return if $sizelimit > 0 && $sizelimit <= $max_size;
+    my $checkfile_limit = $git->get_config_integer( 'githooks.checkfile' => 'sizelimit' ) // 0;
+    return if $checkfile_limit > 0 && $checkfile_limit <= $our_limit;
 
     $announced_size_gap = 1;
 
     my $because =
-      $sizelimit > 0
-      ? "githooks.checkfile.sizelimit is $sizelimit, which is above it"
-      : 'githooks.checkfile.sizelimit is not set, so nothing refuses the file';
+      $checkfile_limit > 0
+      ? "githooks.checkfile.sizelimit is $checkfile_limit, above it"
+      : 'githooks.checkfile.sizelimit is not set, nothing refuses it';
 
-    warn "$PKG: '$filename' is $size bytes, over max-size ($max_size), so it\n"
+    warn "$PKG: '$filename' is $size bytes, over sizelimit ($our_limit),\n"
       . "$PKG: was NOT checked. $because.\n"
-      . "$PKG: Set githooks.checkfile.sizelimit to $max_size or less, or raise\n"
-      . "$PKG: max-size, so that a file cannot be both too big to check and\n"
+      . "$PKG: Set githooks.checkfile.sizelimit to $our_limit or less, or\n"
+      . "$PKG: raise this one, so a file cannot be both too big to check and\n"
       . "$PKG: acceptable to commit.\n";
 
     return;
@@ -259,12 +261,12 @@ sub check_new_or_modified_files {
     my $patterns = _patterns($git);
 
     # get_config_integer, not get_config: it parses git's own k, m and g
-    # suffixes, so `max-size = 5M` means five mebibytes. Read as a plain string
+    # suffixes, so `sizelimit = 5M` means five mebibytes. Read as a plain string
     # it would have meant five BYTES under numeric comparison, and a plugin that
     # skipped every file over five bytes would have checked nothing at all while
     # looking configured.
-    my $max_size = $git->get_config_integer( $CFG => 'max-size' ) // $DEFAULT_MAX_SIZE;
-    my $errors   = 0;
+    my $our_limit = $git->get_config_integer( $CFG => 'sizelimit' ) // $DEFAULT_SIZELIMIT;
+    my $errors    = 0;
 
     foreach my $filename (@files) {
 
@@ -300,9 +302,9 @@ sub check_new_or_modified_files {
         # Size before content: reading the blob is what costs the memory, so the
         # question has to be asked before the answer is slurped.
         my $size = eval { $git->run( qw( cat-file -s ), $blob ) };
-        if ( defined $size && $max_size > 0 && $size > $max_size ) {
-            $log->debugf( "$PKG: %s is %s bytes, over max-size %s, skipped", $filename, $size, $max_size );
-            _announce_size_gap( $git, $filename, $size, $max_size );
+        if ( defined $size && $our_limit > 0 && $size > $our_limit ) {
+            $log->debugf( "$PKG: %s is %s bytes, over sizelimit %s, skipped", $filename, $size, $our_limit );
+            _announce_size_gap( $git, $filename, $size, $our_limit );
             next;
         }
 
@@ -481,7 +483,7 @@ How many findings to report for one file before summarising the rest. Default
 10. A file that is mostly non-ASCII would otherwise produce a page of output
 saying nothing the first few lines did not.
 
-=head2 max-size BYTES
+=head2 sizelimit BYTES
 
 A blob larger than this is not read at all. Default 5242880, five mebibytes.
 
@@ -491,7 +493,22 @@ five mebibytes:
 =for test_synopsis BEGIN { die "SKIP: Git config below."; }
 
     [githooks "checknonascii"]
-        max-size = 5M
+        sizelimit = 5M
+
+B<On the name.> It is C<sizelimit> because that is what
+L<Git::Hooks::CheckFile|Git::Hooks::CheckFile> calls the same idea, and one
+name across the family is worth more than a better name in one plugin. Someone
+who has set C<githooks.checkfile.sizelimit> should not have to discover that
+this plugin spells it differently, and the two are meant to be set together --
+see L</Rejecting the file instead of skipping it>. C<max-size> would read
+better in isolation and was the name until uniformity won.
+
+B<The default differs from CheckFile's, deliberately.> C<CheckFile>'s
+C<sizelimit> defaults to 0, meaning no limit, because policing file size is a
+policy somebody opts into. This one defaults to five mebibytes because its job
+is to bound its own memory use, which is not optional. Setting it to 0 here
+means no limit in the same way -- every blob is read however large -- which
+removes the guard rather than configuring it.
 
 The limit exists so that an enormous object is never slurped into memory: the
 size is asked for with C<cat-file -s> before the content is asked for with
@@ -505,12 +522,23 @@ should raise the limit rather than discover later that those files were never
 read. Setting it to 0 disables the check for every file, which is a way of
 turning the plugin off and not a way of configuring it.
 
+=head2 no-warning-when-over-sizelimit BOOL
+
+Silences the warning described below. Default false, so the warning is on.
+
+Set it where a repository has decided that large unchecked files are acceptable
+and does not want to be told again -- a repository of generated artefacts, say.
+It silences the B<report>, not the skipping: the file is still not checked, and
+the gap is still there. That is the point of having to ask for it by name.
+
+=head2 The warning
+
 When a file is actually skipped for size, and C<CheckFile>'s C<sizelimit> would
 not have refused it either, the plugin says so on standard error once per run:
 
     Git::MoreHooks::CheckNonASCII: 'big.bin' is 9000000 bytes, over
-    max-size (5242880), so it was NOT checked.
-    githooks.checkfile.sizelimit is not set, so nothing refuses the file.
+    sizelimit (5242880), so it was NOT checked.
+    githooks.checkfile.sizelimit is not set, nothing refuses it.
 
 A warning and not a rejection: the commit is not wrong, the configuration is
 incomplete, and failing a commit over that would be the wrong trade. It is tied
@@ -523,10 +551,7 @@ process, however many files a push skips.
 
 L<Git::Hooks::CheckFile|Git::Hooks::CheckFile> has a C<sizelimit> directive
 which B<refuses> a file over a given size rather than passing over it, and it
-takes the same suffixes. The two are spelled differently on purpose: this
-option is C<max-size> because it sits beside C<max-report> in the same section,
-and C<sizelimit> is C<CheckFile>'s own name in its own section, so neither has
-to be remembered as an exception to the other.
+takes the same suffixes, and goes by the same name here for that reason.
 
     [githooks "checkfile"]
         sizelimit = 5M
@@ -540,10 +565,9 @@ repository sets it:
         sizelimit = 5M
 
 That is the other half of this option, and the two together close the gap
-C<max-size> opens. On its own, C<max-size> means a large file is committed
-unread. Set C<githooks.checkfile.sizelimit> at or below
-C<githooks.checknonascii.max-size> and a file can no longer be both too big to
-check and acceptable to commit: whatever this plugin declines to read, that one
+this one opens. On its own, C<githooks.checknonascii.sizelimit> means a large
+file is committed unread. Set C<githooks.checkfile.sizelimit> at or below it
+and a file can no longer be both too big to check and acceptable to commit: whatever this plugin declines to read, that one
 declines to accept.
 
 C<CheckFile> also takes C<basename.sizelimit BYTES REGEXP>, for a limit that

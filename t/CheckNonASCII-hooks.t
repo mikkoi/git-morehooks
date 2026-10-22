@@ -158,25 +158,25 @@ $repo->run( qw/config githooks.plugin Git::MoreHooks::CheckNonASCII/, { env => \
     $repo->run( qw( reset --hard HEAD ), { env => \%env } );
 }
 
-# max-size, so an enormous blob is never slurped. The cost is that a file above
+# sizelimit, so an enormous blob is never slurped. The cost is that a file above
 # the limit is not checked at all, which is why the default is far above source.
 {
-    set_config( $repo, 'max-size' => 32 );
+    set_config( $repo, 'sizelimit' => 32 );
     write_file( 'big.txt', ( 'a' x 64 ) . "\xe2\x80\x94\n" );
-    commit_ok('a file over max-size is skipped, not read');
+    commit_ok('a file over sizelimit is skipped, not read');
 }
 
 {
-    set_config( $repo, 'max-size' => 4096 );
+    set_config( $repo, 'sizelimit' => 4096 );
     write_file( 'small.txt', "under the limit \xe2\x80\x94 here\n" );
-    commit_nok( 'a file under max-size is still checked', qr/U[+]2014/msx );
+    commit_nok( 'a file under sizelimit is still checked', qr/U[+]2014/msx );
     $repo->run( qw( reset --hard HEAD ), { env => \%env } );
 }
 
-# The warning about the gap max-size opens. It is tied to an actual skip, and
+# The warning about the gap sizelimit opens. It is tied to an actual skip, and
 # silent when CheckFile's sizelimit would refuse the file anyway.
 {
-    set_config( $repo, 'max-size' => 32 );
+    set_config( $repo, 'sizelimit' => 32 );
     if ( eval { $repo->run( qw( config --get githooks.checkfile.sizelimit ), { env => \%env } ); 1 } ) {
         $repo->run( qw( config --unset-all githooks.checkfile.sizelimit ), { env => \%env } );
     }
@@ -189,7 +189,7 @@ $repo->run( qw/config githooks.plugin Git::MoreHooks::CheckNonASCII/, { env => \
 }
 
 {
-    set_config( $repo, 'max-size' => 32 );
+    set_config( $repo, 'sizelimit' => 32 );
     $repo->run( qw( config githooks.checkfile.sizelimit 32 ), { env => \%env } );
     write_file( 'covered.txt', ( 'b' x 64 ) . "\n" );
     my ( $committed, undef, undef, $stderr ) =
@@ -199,12 +199,22 @@ $repo->run( qw/config githooks.plugin Git::MoreHooks::CheckNonASCII/, { env => \
     $repo->run( qw( config --unset-all githooks.checkfile.sizelimit ), { env => \%env } );
 }
 
+{
+    set_config( $repo, 'sizelimit' => 32, 'no-warning-when-over-sizelimit' => 'true' );
+    write_file( 'quiet.txt', ( 'c' x 64 ) . "\n" );
+    my ( $committed, undef, undef, $stderr ) =
+      test_command( $repo, 'commit', '-m', 'A commit', { env => \%env } );
+    ok( $committed, 'a skipped file commits with the warning switched off' );
+    unlike( $stderr, qr/was [ ] NOT [ ] checked/msx, 'and no-warning-when-over-sizelimit silences the report' );
+}
+
+# The suffix form. Read as a plain string this would have meant one BYTE, and
 # The suffix form. Read as a plain string this would have meant one BYTE, and
 # every file would have been skipped while the plugin looked configured.
 {
-    set_config( $repo, 'max-size' => '1k' );
+    set_config( $repo, 'sizelimit' => '1k' );
     write_file( 'suffixed.txt', "well under a kibibyte \xe2\x80\x94 here\n" );
-    commit_nok( 'max-size = 1k is a kibibyte, not one byte', qr/U[+]2014/msx );
+    commit_nok( 'sizelimit = 1k is a kibibyte, not one byte', qr/U[+]2014/msx );
     $repo->run( qw( reset --hard HEAD ), { env => \%env } );
 }
 
