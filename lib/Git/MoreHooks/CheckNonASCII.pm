@@ -33,6 +33,10 @@ const my $ASCII_MAX => 0x7f;
 # about size. See "max-size" in the documentation for what it costs.
 const my $DEFAULT_MAX_SIZE => 5 * 1024 * 1024;
 
+# Said at most once per process, however many files a commit or push skips:
+# the point is to be noticed, not to scroll.
+my $announced_size_gap = 0;
+
 #############
 # Grok hook configuration, check it and set defaults.
 
@@ -154,6 +158,42 @@ sub _describe {
     return ( sprintf( 'byte 0x%02X (not valid UTF-8)', $lead ), 1 );
 }
 
+# A file left unread is a file not checked, and on its own that is a gap: it
+# can be committed with anything in it. CheckFile's sizelimit is what closes
+# the gap, by refusing the file outright, so this says so -- but only when a
+# file has ACTUALLY been skipped, and only when sizelimit would not have caught
+# it. A repository with both set sensibly never hears from this; one without is
+# told at the moment it matters rather than on every commit.
+#
+# A warning and not a fault: the commit is not wrong, the configuration is
+# incomplete, and failing the commit over that would be the wrong trade. Git
+# shows a successful hook's standard error to the user, which was verified
+# rather than assumed.
+sub _announce_size_gap {
+    my ( $git, $filename, $size, $max_size ) = @_;
+
+    return if $announced_size_gap;
+
+    # 0, or unset, is CheckFile's default and means it imposes no limit at all.
+    my $sizelimit = $git->get_config_integer( 'githooks.checkfile' => 'sizelimit' ) // 0;
+    return if $sizelimit > 0 && $sizelimit <= $max_size;
+
+    $announced_size_gap = 1;
+
+    my $because =
+      $sizelimit > 0
+      ? "githooks.checkfile.sizelimit is $sizelimit, which is above it"
+      : 'githooks.checkfile.sizelimit is not set, so nothing refuses the file';
+
+    warn "$PKG: '$filename' is $size bytes, over max-size ($max_size), so it\n"
+      . "$PKG: was NOT checked. $because.\n"
+      . "$PKG: Set githooks.checkfile.sizelimit to $max_size or less, or raise\n"
+      . "$PKG: max-size, so that a file cannot be both too big to check and\n"
+      . "$PKG: acceptable to commit.\n";
+
+    return;
+}
+
 #############
 # Checks
 
@@ -260,8 +300,9 @@ sub check_new_or_modified_files {
         # Size before content: reading the blob is what costs the memory, so the
         # question has to be asked before the answer is slurped.
         my $size = eval { $git->run( qw( cat-file -s ), $blob ) };
-        if ( defined $size && $size > $max_size ) {
+        if ( defined $size && $max_size > 0 && $size > $max_size ) {
             $log->debugf( "$PKG: %s is %s bytes, over max-size %s, skipped", $filename, $size, $max_size );
+            _announce_size_gap( $git, $filename, $size, $max_size );
             next;
         }
 
@@ -464,11 +505,34 @@ should raise the limit rather than discover later that those files were never
 read. Setting it to 0 disables the check for every file, which is a way of
 turning the plugin off and not a way of configuring it.
 
+When a file is actually skipped for size, and C<CheckFile>'s C<sizelimit> would
+not have refused it either, the plugin says so on standard error once per run:
+
+    Git::MoreHooks::CheckNonASCII: 'big.bin' is 9000000 bytes, over
+    max-size (5242880), so it was NOT checked.
+    githooks.checkfile.sizelimit is not set, so nothing refuses the file.
+
+A warning and not a rejection: the commit is not wrong, the configuration is
+incomplete, and failing a commit over that would be the wrong trade. It is tied
+to a file having really been skipped rather than to the configuration alone, so
+a repository with both options set sensibly never hears from it, and one
+without hears at the moment it matters instead of on every commit. Once per
+process, however many files a push skips.
+
 =head2 Rejecting the file instead of skipping it
 
 L<Git::Hooks::CheckFile|Git::Hooks::CheckFile> has a C<sizelimit> directive
 which B<refuses> a file over a given size rather than passing over it, and it
-takes the same suffixes:
+takes the same suffixes. The two are spelled differently on purpose: this
+option is C<max-size> because it sits beside C<max-report> in the same section,
+and C<sizelimit> is C<CheckFile>'s own name in its own section, so neither has
+to be remembered as an exception to the other.
+
+    [githooks "checkfile"]
+        sizelimit = 5M
+
+Its default is 0, which means B<no limit at all>, so it does nothing until a
+repository sets it:
 
 =for test_synopsis BEGIN { die "SKIP: Git config below."; }
 
