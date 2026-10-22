@@ -200,12 +200,12 @@ $repo->run( qw/config githooks.plugin Git::MoreHooks::CheckNonASCII/, { env => \
 }
 
 {
-    set_config( $repo, 'sizelimit' => 32, 'no-warning-when-over-sizelimit' => 'true' );
+    set_config( $repo, 'sizelimit' => 32, 'warn-when-over-sizelimit' => 'false' );
     write_file( 'quiet.txt', ( 'c' x 64 ) . "\n" );
     my ( $committed, undef, undef, $stderr ) =
       test_command( $repo, 'commit', '-m', 'A commit', { env => \%env } );
     ok( $committed, 'a skipped file commits with the warning switched off' );
-    unlike( $stderr, qr/was [ ] NOT [ ] checked/msx, 'and no-warning-when-over-sizelimit silences the report' );
+    unlike( $stderr, qr/was [ ] NOT [ ] checked/msx, 'and warn-when-over-sizelimit = false silences the report' );
 }
 
 # The suffix form. Read as a plain string this would have meant one BYTE, and

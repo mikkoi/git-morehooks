@@ -5,8 +5,8 @@ Revision history for {{$dist->name}}
             * CheckNonASCII: the size option is sizelimit, the name
                 Git::Hooks::CheckFile already uses for the same idea.
                 Its default differs: five mebibytes here, 0 there.
-            * CheckNonASCII: add no-warning-when-over-sizelimit, to
-                silence the report without changing what is skipped.
+            * CheckNonASCII: add warn-when-over-sizelimit, default true,
+                to silence the report without changing what is skipped.
             * CheckNonASCII: warn once, on standard error, when a file is
                 skipped for size and githooks.checkfile.sizelimit would
                 not have refused it either -- so the gap max-size opens

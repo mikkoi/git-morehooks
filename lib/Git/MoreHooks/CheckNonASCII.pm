@@ -54,11 +54,11 @@ sub _setup_config {
     # No default patterns. Unset 'name' means every file, because the rule this
     # plugin exists for is repository-wide; 'skip' is how a repository carves
     # out the files where non-ASCII is the point.
-    $default->{'name'}                           //= [];
-    $default->{'skip'}                           //= [];
-    $default->{'max-report'}                     //= [$DEFAULT_MAX_REPORT];
-    $default->{'sizelimit'}                      //= [$DEFAULT_SIZELIMIT];
-    $default->{'no-warning-when-over-sizelimit'} //= [0];
+    $default->{'name'}                     //= [];
+    $default->{'skip'}                     //= [];
+    $default->{'max-report'}               //= [$DEFAULT_MAX_REPORT];
+    $default->{'sizelimit'}                //= [$DEFAULT_SIZELIMIT];
+    $default->{'warn-when-over-sizelimit'} //= ['true'];
 
     return;
 }
@@ -174,7 +174,7 @@ sub _announce_size_gap {
     my ( $git, $filename, $size, $our_limit ) = @_;
 
     return if $announced_size_gap;
-    return if $git->get_config_boolean( $CFG => 'no-warning-when-over-sizelimit' );
+    return if !$git->get_config_boolean( $CFG => 'warn-when-over-sizelimit' );
 
     # 0, or unset, is CheckFile's default and means it imposes no limit at all.
     my $checkfile_limit = $git->get_config_integer( 'githooks.checkfile' => 'sizelimit' ) // 0;
@@ -522,14 +522,27 @@ should raise the limit rather than discover later that those files were never
 read. Setting it to 0 disables the check for every file, which is a way of
 turning the plugin off and not a way of configuring it.
 
-=head2 no-warning-when-over-sizelimit BOOL
+=head2 warn-when-over-sizelimit BOOL
 
-Silences the warning described below. Default false, so the warning is on.
+Whether to report a file that was skipped for size. Default true.
 
-Set it where a repository has decided that large unchecked files are acceptable
-and does not want to be told again -- a repository of generated artefacts, say.
-It silences the B<report>, not the skipping: the file is still not checked, and
-the gap is still there. That is the point of having to ask for it by name.
+Set it false where a repository has decided that large unchecked files are
+acceptable and does not want to be told again -- a repository of generated
+artefacts, say:
+
+=for test_synopsis BEGIN { die "SKIP: Git config below."; }
+
+    [githooks "checknonascii"]
+        warn-when-over-sizelimit = false
+
+It silences the B<report> and not the skipping: the file is still not checked
+and the gap is still there, which is why turning it off has to be deliberate.
+
+The option is phrased positively, and defaults to true, rather than being a
+C<no-warning-...> switch. A negative name is a puzzle the moment somebody has
+to turn it back ON, because C<no-warning = false> is two negations to read
+through, and that happens whenever a repository overrides a template or a
+global setting.
 
 =head2 The warning
 
