@@ -2,6 +2,10 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
             * Add Text::Glob to cpanfile.
+            * CheckNonASCII: warn once, on standard error, when a file is
+                skipped for size and githooks.checkfile.sizelimit would
+                not have refused it either -- so the gap max-size opens
+                is not silent.
             * CheckNonASCII: read max-size with get_config_integer, so
                 git suffixes work and max-size = 5M means five
                 mebibytes. As a plain string it meant five BYTES.

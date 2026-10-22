@@ -173,6 +173,32 @@ $repo->run( qw/config githooks.plugin Git::MoreHooks::CheckNonASCII/, { env => \
     $repo->run( qw( reset --hard HEAD ), { env => \%env } );
 }
 
+# The warning about the gap max-size opens. It is tied to an actual skip, and
+# silent when CheckFile's sizelimit would refuse the file anyway.
+{
+    set_config( $repo, 'max-size' => 32 );
+    if ( eval { $repo->run( qw( config --get githooks.checkfile.sizelimit ), { env => \%env } ); 1 } ) {
+        $repo->run( qw( config --unset-all githooks.checkfile.sizelimit ), { env => \%env } );
+    }
+    write_file( 'unchecked.txt', ( 'a' x 64 ) . "\n" );
+    my ( $ok, undef, undef, $err ) =
+      test_command( $repo, 'commit', '-m', 'A commit', { env => \%env } );
+    ok( $ok, 'a skipped file still commits' );
+    like( $err, qr/was [ ] NOT [ ] checked/msx,          'and says the file was not checked' );
+    like( $err, qr/sizelimit [ ] is [ ] not [ ] set/msx, 'and says nothing refuses it either' );
+}
+
+{
+    set_config( $repo, 'max-size' => 32 );
+    $repo->run( qw( config githooks.checkfile.sizelimit 32 ), { env => \%env } );
+    write_file( 'covered.txt', ( 'b' x 64 ) . "\n" );
+    my ( $committed, undef, undef, $stderr ) =
+      test_command( $repo, 'commit', '-m', 'A commit', { env => \%env } );
+    ok( $committed, 'a skipped file commits here too' );
+    unlike( $stderr, qr/was [ ] NOT [ ] checked/msx, 'but says nothing: sizelimit covers the gap' );
+    $repo->run( qw( config --unset-all githooks.checkfile.sizelimit ), { env => \%env } );
+}
+
 # The suffix form. Read as a plain string this would have meant one BYTE, and
 # every file would have been skipped while the plugin looked configured.
 {
