@@ -10,6 +10,8 @@ use Test2::V0;
 
 use Test2::Require::Module 'Git::MoreHooks::CheckNonASCII';
 use Git::MoreHooks::CheckNonASCII;
+use Git::Hooks::Test ':all';
+use Log::Any::Adapter ('Null');
 
 # The bytes are written as escapes on purpose: this file stays ASCII, which is
 # the rule the plugin exists to enforce. A fixture written in the characters
@@ -78,6 +80,36 @@ subtest '_compile_pattern takes a glob or a qr' => sub {
 
     my $slash = Git::MoreHooks::CheckNonASCII::_compile_pattern('qr/[.]txt\z/');
     like( 'a.txt', $slash, 'a qr with slashes matches' );
+
+    done_testing;
+};
+
+# The once-only warning is held per repository, not per process. A package
+# variable would stay set after the first repository and the second would never
+# be told -- which no hook test can catch, because each commit there runs in its
+# own git process. This one exercises two repositories in ONE interpreter, which
+# is what a long-running test suite or a persistent worker does.
+subtest 'the once-only warning does not leak between repositories' => sub {
+    my ( $first, undef, undef, undef ) = new_repos();
+    my ( $other, undef, undef, undef ) = new_repos();
+
+    # warnings returns an ARRAYREF, not a list. `my @w = warnings {...}` is a
+    # one-element list holding that reference, so its count is always 1 and an
+    # assertion on it passes whatever happened.
+    my $one = warnings {
+        Git::MoreHooks::CheckNonASCII::_announce_size_gap( $first, 'big.bin', 9_000_000, 100 );
+    };
+    is( scalar @{$one}, 1, 'the first repository is told' );
+
+    my $again = warnings {
+        Git::MoreHooks::CheckNonASCII::_announce_size_gap( $first, 'other.bin', 9_000_000, 100 );
+    };
+    is( scalar @{$again}, 0, 'and told only once' );
+
+    my $elsewhere = warnings {
+        Git::MoreHooks::CheckNonASCII::_announce_size_gap( $other, 'big.bin', 9_000_000, 100 );
+    };
+    is( scalar @{$elsewhere}, 1, 'the second repository is told as well' );
 
     done_testing;
 };

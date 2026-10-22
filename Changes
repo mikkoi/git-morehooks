@@ -2,6 +2,13 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
             * Add Text::Glob to cpanfile.
+            * CheckNonASCII: an unreadable blob size no longer falls
+                through to reading the blob. A submodule gitlink hits
+                that path routinely, so it is a silent skip and not a
+                fault.
+            * CheckNonASCII: the once-only size warning is held per
+                repository, not in a package variable, so a second
+                repository in the same interpreter is still told.
             * CheckNonASCII: the size option is sizelimit, the name
                 Git::Hooks::CheckFile already uses for the same idea.
                 Its default differs: five mebibytes here, 0 there.
