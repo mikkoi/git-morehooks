@@ -173,6 +173,15 @@ $repo->run( qw/config githooks.plugin Git::MoreHooks::CheckNonASCII/, { env => \
     $repo->run( qw( reset --hard HEAD ), { env => \%env } );
 }
 
+# The suffix form. Read as a plain string this would have meant one BYTE, and
+# every file would have been skipped while the plugin looked configured.
+{
+    set_config( $repo, 'max-size' => '1k' );
+    write_file( 'suffixed.txt', "well under a kibibyte \xe2\x80\x94 here\n" );
+    commit_nok( 'max-size = 1k is a kibibyte, not one byte', qr/U[+]2014/msx );
+    $repo->run( qw( reset --hard HEAD ), { env => \%env } );
+}
+
 # Line endings. A line number has to mean the same thing whatever wrote the file.
 {
     set_config($repo);
