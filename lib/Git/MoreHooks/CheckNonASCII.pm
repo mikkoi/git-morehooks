@@ -33,10 +33,6 @@ const my $ASCII_MAX => 0x7f;
 # about size. See "sizelimit" in the documentation for what it costs.
 const my $DEFAULT_SIZELIMIT => 5 * 1024 * 1024;
 
-# Said at most once per process, however many files a commit or push skips:
-# the point is to be noticed, not to scroll.
-my $announced_size_gap = 0;
-
 #############
 # Grok hook configuration, check it and set defaults.
 
@@ -46,6 +42,7 @@ sub _setup_config {
     # A test may run several configurations through one repository object, so a
     # cache that outlived the change would answer for the previous one.
     delete $git->cache('checknonascii')->{'patterns'};
+    delete $git->cache('checknonascii')->{'announced_size_gap'};
 
     my $config = $git->get_config();
     $config->{ lc $CFG } //= {};
@@ -168,14 +165,27 @@ sub _describe {
 sub _announce_size_gap {
     my ( $git, $filename, $size, $our_limit ) = @_;
 
-    return if $announced_size_gap;
-    return if !$git->get_config_boolean( $CFG => 'warn-when-over-sizelimit' );
+    # Said at most once, however many files one invocation skips: the point is
+    # to be noticed, not to scroll. Held in the per-repository cache rather
+    # than a package variable, because a package variable outlives the
+    # invocation in any interpreter that handles more than one -- a test suite
+    # walking several repositories, or a persistent worker -- and the second
+    # repository would then never be told. _setup_config clears it.
+    my $cache = $git->cache('checknonascii');
+    return if $cache->{'announced_size_gap'};
+
+    # The default is repeated here rather than relied upon. _setup_config
+    # installs it, and the drivers do call _setup_config, but a sub whose
+    # behaviour silently inverts when it has not run is a trap: an undef from
+    # get_config_boolean would read as "switched off" and the warning would
+    # vanish with nothing to show why.
+    return if !( $git->get_config_boolean( $CFG => 'warn-when-over-sizelimit' ) // 1 );
 
     # 0, or unset, is CheckFile's default and means it imposes no limit at all.
     my $checkfile_limit = $git->get_config_integer( 'githooks.checkfile' => 'sizelimit' ) // 0;
     return if $checkfile_limit > 0 && $checkfile_limit <= $our_limit;
 
-    $announced_size_gap = 1;
+    $cache->{'announced_size_gap'} = 1;
 
     my $because =
       $checkfile_limit > 0
@@ -312,8 +322,30 @@ sub check_new_or_modified_files {
 
         # Size before content: reading the blob is what costs the memory, so the
         # question has to be asked before the answer is slurped.
+        # An unreadable size means the read cannot be bounded, so the content is
+        # NOT read. Falling through would have asked for the blob anyway and
+        # slurped whatever came back, which is the denial of service the limit
+        # exists to prevent -- and a guard that disappears under the conditions
+        # it was written for is worse than none, because it still reads as one.
+        #
+        # Tested for being a plain integer as well as defined: a truncated or
+        # interrupted answer is not a size, and comparing a non-number
+        # numerically is how `5M` once meant five bytes.
+        #
+        # Not a fault, which is measured rather than lenient. A submodule
+        # gitlink lands here on every commit that touches one, because
+        # "<commit>:<path>" is not a valid object name for a gitlink and
+        # cat-file refuses it for -s and -p alike. Failing the hook would break
+        # every repository with a submodule. A symlink, by contrast, reads fine
+        # and IS scanned: its content is the target path, and a bidirectional
+        # override in a link target misleads as well as one in a source line.
         my $size = eval { $git->run( qw( cat-file -s ), $blob ) };
-        if ( defined $size && $our_limit > 0 && $size > $our_limit ) {
+        if ( !defined $size || $size !~ m/\A\d+\z/msx ) {
+            $log->debugf( "$PKG: cannot read the size of %s, so it was not read", $filename );
+            next;
+        }
+
+        if ( $our_limit > 0 && $size > $our_limit ) {
             $log->debugf( "$PKG: %s is %s bytes, over sizelimit %s, skipped", $filename, $size, $our_limit );
             _announce_size_gap( $git, $filename, $size, $our_limit );
             next;

@@ -252,4 +252,35 @@ $repo->run( qw/config githooks.plugin Git::MoreHooks::CheckNonASCII/, { env => \
     test_nok_match( 'a push is rejected by the server side', qr/U[+]202E/msx, $repo, 'push', 'clone', 'master', { env => \%env } );
 }
 
+# core.quotepath is on by default and makes plumbing report a non-ASCII path as
+# "caf\303\251.pm", which is itself all ASCII. Paths come from
+# filter_files_in_*, which pass -z and are therefore unquoted, and this pins
+# that: set explicitly, so a change back to a quoting command fails here rather
+# than silently blinding the file name check.
+{
+    set_config($repo);
+    $repo->run( qw( config core.quotepath true ), { env => \%env } );
+    write_file( "caf\xc3\xa9.pm", "plain ascii content\n" );
+    commit_nok( 'a non-ascii file name is seen through core.quotepath', qr/U[+]00E9/msx );
+    $repo->run( qw( reset --hard HEAD ),                 { env => \%env } );
+    $repo->run( qw( config --unset-all core.quotepath ), { env => \%env } );
+}
+
+# A size that cannot be read must not fall through to reading the content. A
+# submodule gitlink is the case that arrives routinely: "<commit>:<path>" is
+# not a valid object name for one, so cat-file refuses both -s and -p, and
+# treating that as a fault would fail every commit that touches a submodule.
+# Staged with update-index rather than `submodule add`, which needs a second
+# repository and a relaxed protocol.file setting to do the same thing.
+{
+    set_config($repo);
+    my $head = $repo->run( 'rev-parse', 'HEAD', { env => \%env } );
+    $repo->run( 'update-index', '--add', '--cacheinfo', "160000,$head,mod", { env => \%env } );
+
+    my ( $committed, undef, undef, $stderr ) =
+      test_command( $repo, 'commit', '-m', 'Add a gitlink', { env => \%env } );
+    ok( $committed, 'a commit adding a gitlink is not failed by the size guard' );
+    unlike( $stderr, qr/was [ ] NOT [ ] checked/msx, 'and the gitlink is not reported as a skipped file' );
+}
+
 done_testing();
