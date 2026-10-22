@@ -2,6 +2,12 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
             * Add Text::Glob to cpanfile.
+            * CheckNonASCII: ask cat-file -s for the blob size before
+                reading it, and skip anything over max-size, so an
+                enormous object is never slurped into memory.
+            * CheckNonASCII: split lines on CRLF, CR or LF. Splitting on
+                LF alone reported every finding in a CR-only file as
+                being on line 1.
             * Add CheckNonASCII, a plugin which reports characters outside
                 ASCII in the files a commit touches, and in their names.
                 The purpose is Unicode attacks -- bidirectional overrides,
