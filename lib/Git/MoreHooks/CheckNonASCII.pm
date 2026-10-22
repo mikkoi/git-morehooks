@@ -124,11 +124,8 @@ sub _is_binary {
     return index( $content, "\0" ) >= 0;
 }
 
-# What was found, named rather than printed. The character itself is NOT put in
-# the message: the whole class of attack this plugin reports is characters that
-# do not look like what they are, and a report is read in a terminal, pasted
-# into an issue and scrolled past. A codepoint can be looked up; a zero-width
-# character in a report is invisible twice over.
+# What was found, named rather than printed -- see "What is reported, and what
+# is not" in the documentation for why that is the whole point.
 #
 # Returns the description and how many bytes it accounted for.
 sub _describe {
@@ -162,17 +159,12 @@ sub _describe {
     return ( sprintf( 'byte 0x%02X (not valid UTF-8)', $lead ), 1 );
 }
 
-# A file left unread is a file not checked, and on its own that is a gap: it
-# can be committed with anything in it. CheckFile's sizelimit is what closes
-# the gap, by refusing the file outright, so this says so -- but only when a
-# file has ACTUALLY been skipped, and only when sizelimit would not have caught
-# it. A repository with both set sensibly never hears from this; one without is
-# told at the moment it matters rather than on every commit.
+# See "The warning" in the documentation for what this reports and when.
 #
-# A warning and not a fault: the commit is not wrong, the configuration is
-# incomplete, and failing the commit over that would be the wrong trade. Git
-# shows a successful hook's standard error to the user, which was verified
-# rather than assumed.
+# Why standard error: fault() is the only user-visible channel the plugin API
+# offers and it fails the hook, which would be the wrong trade for a
+# configuration that is merely incomplete. Git does relay a successful hook's
+# standard error to the user -- verified rather than assumed.
 sub _announce_size_gap {
     my ( $git, $filename, $size, $our_limit ) = @_;
 
