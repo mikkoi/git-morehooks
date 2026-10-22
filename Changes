@@ -2,6 +2,9 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
             * Add Text::Glob to cpanfile.
+            * CheckNonASCII: read max-size with get_config_integer, so
+                git suffixes work and max-size = 5M means five
+                mebibytes. As a plain string it meant five BYTES.
             * CheckNonASCII: ask cat-file -s for the blob size before
                 reading it, and skip anything over max-size, so an
                 enormous object is never slurped into memory.

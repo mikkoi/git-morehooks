@@ -217,7 +217,13 @@ sub check_new_or_modified_files {
     return 0 if !@files;
 
     my $patterns = _patterns($git);
-    my $max_size = ( $git->get_config( $CFG => 'max-size' ) )[0] // $DEFAULT_MAX_SIZE;
+
+    # get_config_integer, not get_config: it parses git's own k, m and g
+    # suffixes, so `max-size = 5M` means five mebibytes. Read as a plain string
+    # it would have meant five BYTES under numeric comparison, and a plugin that
+    # skipped every file over five bytes would have checked nothing at all while
+    # looking configured.
+    my $max_size = $git->get_config_integer( $CFG => 'max-size' ) // $DEFAULT_MAX_SIZE;
     my $errors   = 0;
 
     foreach my $filename (@files) {
@@ -438,6 +444,14 @@ saying nothing the first few lines did not.
 
 A blob larger than this is not read at all. Default 5242880, five mebibytes.
 
+Read with C<get_config_integer>, so git's own suffixes work and C<5M> means
+five mebibytes:
+
+=for test_synopsis BEGIN { die "SKIP: Git config below."; }
+
+    [githooks "checknonascii"]
+        max-size = 5M
+
 The limit exists so that an enormous object is never slurped into memory: the
 size is asked for with C<cat-file -s> before the content is asked for with
 C<cat-file -p>, so a huge blob costs one cheap question and nothing else.
@@ -449,6 +463,28 @@ hiding -- but it is a hole, and a repository that genuinely commits large text
 should raise the limit rather than discover later that those files were never
 read. Setting it to 0 disables the check for every file, which is a way of
 turning the plugin off and not a way of configuring it.
+
+=head2 Rejecting the file instead of skipping it
+
+L<Git::Hooks::CheckFile|Git::Hooks::CheckFile> has a C<sizelimit> directive
+which B<refuses> a file over a given size rather than passing over it, and it
+takes the same suffixes:
+
+=for test_synopsis BEGIN { die "SKIP: Git config below."; }
+
+    [githooks "checkfile"]
+        sizelimit = 5M
+
+That is the other half of this option, and the two together close the gap
+C<max-size> opens. On its own, C<max-size> means a large file is committed
+unread. Set C<githooks.checkfile.sizelimit> at or below
+C<githooks.checknonascii.max-size> and a file can no longer be both too big to
+check and acceptable to commit: whatever this plugin declines to read, that one
+declines to accept.
+
+C<CheckFile> also takes C<basename.sizelimit BYTES REGEXP>, for a limit that
+applies to some names and not others -- useful where one directory of large
+fixtures is expected and the rest of the repository is source.
 
 =head1 LINE ENDINGS
 
