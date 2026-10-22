@@ -158,6 +158,36 @@ $repo->run( qw/config githooks.plugin Git::MoreHooks::CheckNonASCII/, { env => \
     $repo->run( qw( reset --hard HEAD ), { env => \%env } );
 }
 
+# max-size, so an enormous blob is never slurped. The cost is that a file above
+# the limit is not checked at all, which is why the default is far above source.
+{
+    set_config( $repo, 'max-size' => 32 );
+    write_file( 'big.txt', ( 'a' x 64 ) . "\xe2\x80\x94\n" );
+    commit_ok('a file over max-size is skipped, not read');
+}
+
+{
+    set_config( $repo, 'max-size' => 4096 );
+    write_file( 'small.txt', "under the limit \xe2\x80\x94 here\n" );
+    commit_nok( 'a file under max-size is still checked', qr/U[+]2014/msx );
+    $repo->run( qw( reset --hard HEAD ), { env => \%env } );
+}
+
+# Line endings. A line number has to mean the same thing whatever wrote the file.
+{
+    set_config($repo);
+    write_file( 'crlf.txt', "first line\r\nsecond \xe2\x80\x94 here\r\n" );
+    commit_nok( 'CRLF: the finding is on line 2', qr/crlf[.]txt:2 [ ] byte [ ] 8/msx );
+    $repo->run( qw( reset --hard HEAD ), { env => \%env } );
+}
+
+{
+    set_config($repo);
+    write_file( 'cr.txt', "first line\rsecond \xe2\x80\x94 here\r" );
+    commit_nok( 'CR only: the finding is on line 2, not line 1', qr/cr[.]txt:2 [ ] byte [ ] 8/msx );
+    $repo->run( qw( reset --hard HEAD ), { env => \%env } );
+}
+
 # A non-ASCII file NAME is an attack surface of its own.
 {
     set_config($repo);

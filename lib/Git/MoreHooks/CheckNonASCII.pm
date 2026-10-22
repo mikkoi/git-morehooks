@@ -28,6 +28,11 @@ const my $DEFAULT_MAX_REPORT => 10;
 # The last codepoint this plugin has no objection to.
 const my $ASCII_MAX => 0x7f;
 
+# Above this, a blob is left unread. Deliberately far above any source file:
+# the point is to avoid slurping something enormous, not to have an opinion
+# about size. See "max-size" in the documentation for what it costs.
+const my $DEFAULT_MAX_SIZE => 5 * 1024 * 1024;
+
 #############
 # Grok hook configuration, check it and set defaults.
 
@@ -48,6 +53,7 @@ sub _setup_config {
     $default->{'name'}       //= [];
     $default->{'skip'}       //= [];
     $default->{'max-report'} //= [$DEFAULT_MAX_REPORT];
+    $default->{'max-size'}   //= [$DEFAULT_MAX_SIZE];
 
     return;
 }
@@ -159,8 +165,12 @@ sub file_errors {
     my $max = ( $git->get_config( $CFG => 'max-report' ) )[0] // $DEFAULT_MAX_REPORT;
     my @findings;
 
+    # All three line endings, so that a line number means the same thing
+    # whatever platform the file was written on. Splitting on \n alone reported
+    # every finding in a CR-only file as line 1, and left the CR of a CRLF file
+    # at the end of the line.
     my $line_number = 0;
-    foreach my $line ( split /\n/msx, $content ) {
+    foreach my $line ( split /\r\n|[\r\n]/msx, $content ) {
         $line_number++;
         next if $line !~ m/[^\x00-\x7f]/msx;
 
@@ -207,6 +217,7 @@ sub check_new_or_modified_files {
     return 0 if !@files;
 
     my $patterns = _patterns($git);
+    my $max_size = ( $git->get_config( $CFG => 'max-size' ) )[0] // $DEFAULT_MAX_SIZE;
     my $errors   = 0;
 
     foreach my $filename (@files) {
@@ -235,7 +246,20 @@ sub check_new_or_modified_files {
         # object names, so one call reads the blob wherever the hook is running.
         # ls-files would have been wrong on the server: a bare repository has no
         # index for the commits being pushed.
-        my $content = eval { $git->run( qw( cat-file -p ), "$commit:$filename" ) };
+        # The object name always begins with the commit-ish, so a path starting
+        # with a dash cannot be read as an option and needs no "--" separator --
+        # which is just as well, because cat-file does not document one.
+        my $blob = "$commit:$filename";
+
+        # Size before content: reading the blob is what costs the memory, so the
+        # question has to be asked before the answer is slurped.
+        my $size = eval { $git->run( qw( cat-file -s ), $blob ) };
+        if ( defined $size && $size > $max_size ) {
+            $log->debugf( "$PKG: %s is %s bytes, over max-size %s, skipped", $filename, $size, $max_size );
+            next;
+        }
+
+        my $content = eval { $git->run( qw( cat-file -p ), $blob ) };
         if ( !defined $content ) {
 
             # A path that cannot be read is not this plugin's business to
@@ -409,6 +433,35 @@ deliberately not ASCII is exempted by the same entry.
 How many findings to report for one file before summarising the rest. Default
 10. A file that is mostly non-ASCII would otherwise produce a page of output
 saying nothing the first few lines did not.
+
+=head2 max-size BYTES
+
+A blob larger than this is not read at all. Default 5242880, five mebibytes.
+
+The limit exists so that an enormous object is never slurped into memory: the
+size is asked for with C<cat-file -s> before the content is asked for with
+C<cat-file -p>, so a huge blob costs one cheap question and nothing else.
+
+B<What it costs is worth stating plainly: a file above the limit is not
+checked.> A default this far above any plausible source file is the reason it
+is not much of a hole -- a payload hidden in a six megabyte source file is not
+hiding -- but it is a hole, and a repository that genuinely commits large text
+should raise the limit rather than discover later that those files were never
+read. Setting it to 0 disables the check for every file, which is a way of
+turning the plugin off and not a way of configuring it.
+
+=head1 LINE ENDINGS
+
+Lines are split on CRLF, CR or LF, so a line number means the same thing
+whatever platform the file was written on. Splitting on LF alone reported every
+finding in a CR-only file as being on line 1.
+
+The byte offset is counted B<within its line>, from 1, and is a count of bytes
+rather than of characters -- so the offset of the character after a three-byte
+sequence is three further on, not one. That is deliberate: the offset is there
+to be found again in the raw file, and a tool that counts characters disagrees
+with one that counts bytes precisely where multi-byte characters are involved,
+which is everywhere this plugin reports.
 
 =head1 AFFECTED HOOKS
 
