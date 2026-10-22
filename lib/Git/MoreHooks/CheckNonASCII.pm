@@ -79,8 +79,11 @@ sub _compile_pattern {
         my ( $open, $body, $closer ) = ( $1, $2, $3 );
         my $want = $CLOSER{$open} // $open;
 
-        # Used exactly as the repository wrote it. Imposing /msx here would
-        # change the meaning of a pattern somebody else composed.
+        # $body is still regex SOURCE at this point, so /msx would really apply
+        # to it and would really change what the repository asked for: /x alone
+        # makes every space in their pattern insignificant. A pattern composed
+        # by somebody else is compiled as they wrote it, so the three policies
+        # that want flags on every match are refused here deliberately.
         ## no critic (RegularExpressions::RequireDotMatchAnything)
         ## no critic (RegularExpressions::RequireExtendedFormatting)
         ## no critic (RegularExpressions::RequireLineBoundaryMatching)
@@ -270,6 +273,22 @@ sub check_new_or_modified_files {
 
     foreach my $filename (@files) {
 
+        # The opposite case to the one in _compile_pattern, and suppressed for
+        # the opposite reason: $_ here is ALREADY a compiled qr, and a qr
+        # carries its own flags. It interpolates as (?^:...), where the caret
+        # resets flags to the ones the qr was built with, so an /msx written
+        # here reaches nothing inside it.
+        #
+        # Measured rather than assumed. Take a pattern in which a space
+        # matters, built as qr of a space b. Under a match with /x the string
+        # "a b" still matches and "ab" still does not, which it would not if
+        # the /x had reached the space. Likewise /s does not make a dot inside
+        # the qr match a newline, while building the qr with /s does.
+        #
+        # So adding the flags would satisfy the three policies while changing
+        # no behaviour at all, and would tell the next reader the match is
+        # flagged when it is not. A suppression that says why is the honest
+        # form.
         ## no critic (RegularExpressions::RequireDotMatchAnything)
         ## no critic (RegularExpressions::RequireExtendedFormatting)
         ## no critic (RegularExpressions::RequireLineBoundaryMatching)
