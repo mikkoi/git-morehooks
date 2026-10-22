@@ -1,6 +1,36 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Add Text::Glob to cpanfile.
+            * CheckNonASCII: an unreadable blob size no longer falls
+                through to reading the blob. A submodule gitlink hits
+                that path routinely, so it is a silent skip and not a
+                fault.
+            * CheckNonASCII: the once-only size warning is held per
+                repository, not in a package variable, so a second
+                repository in the same interpreter is still told.
+            * CheckNonASCII: the size option is sizelimit, the name
+                Git::Hooks::CheckFile already uses for the same idea.
+                Its default differs: five mebibytes here, 0 there.
+            * CheckNonASCII: add warn-when-over-sizelimit, default true,
+                to silence the report without changing what is skipped.
+            * CheckNonASCII: warn once, on standard error, when a file is
+                skipped for size and githooks.checkfile.sizelimit would
+                not have refused it either -- so the gap max-size opens
+                is not silent.
+            * CheckNonASCII: read max-size with get_config_integer, so
+                git suffixes work and max-size = 5M means five
+                mebibytes. As a plain string it meant five BYTES.
+            * CheckNonASCII: ask cat-file -s for the blob size before
+                reading it, and skip anything over max-size, so an
+                enormous object is never slurped into memory.
+            * CheckNonASCII: split lines on CRLF, CR or LF. Splitting on
+                LF alone reported every finding in a CR-only file as
+                being on line 1.
+            * Add CheckNonASCII, a plugin which reports characters outside
+                ASCII in the files a commit touches, and in their names.
+                The purpose is Unicode attacks -- bidirectional overrides,
+                invisible characters, homoglyphs -- not tidiness.
             * CheckTrailers: the once-only report of an interpret-trailers
                 failure is held per repository, not in a package variable,
                 so a second repository handled by the same interpreter is
