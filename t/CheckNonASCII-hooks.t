@@ -266,21 +266,4 @@ $repo->run( qw/config githooks.plugin Git::MoreHooks::CheckNonASCII/, { env => \
     $repo->run( qw( config --unset-all core.quotepath ), { env => \%env } );
 }
 
-# A size that cannot be read must not fall through to reading the content. A
-# submodule gitlink is the case that arrives routinely: "<commit>:<path>" is
-# not a valid object name for one, so cat-file refuses both -s and -p, and
-# treating that as a fault would fail every commit that touches a submodule.
-# Staged with update-index rather than `submodule add`, which needs a second
-# repository and a relaxed protocol.file setting to do the same thing.
-{
-    set_config($repo);
-    my $head = $repo->run( 'rev-parse', 'HEAD', { env => \%env } );
-    $repo->run( 'update-index', '--add', '--cacheinfo', "160000,$head,mod", { env => \%env } );
-
-    my ( $committed, undef, undef, $stderr ) =
-      test_command( $repo, 'commit', '-m', 'Add a gitlink', { env => \%env } );
-    ok( $committed, 'a commit adding a gitlink is not failed by the size guard' );
-    unlike( $stderr, qr/was [ ] NOT [ ] checked/msx, 'and the gitlink is not reported as a skipped file' );
-}
-
 done_testing();

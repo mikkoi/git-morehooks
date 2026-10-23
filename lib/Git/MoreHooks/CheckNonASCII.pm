@@ -33,6 +33,9 @@ const my $ASCII_MAX => 0x7f;
 # about size. See "sizelimit" in the documentation for what it costs.
 const my $DEFAULT_SIZELIMIT => 5 * 1024 * 1024;
 
+# How much is pulled off the pipe at a time while reading a blob.
+const my $BATCH_CHUNK => 64 * 1024;
+
 #############
 # Grok hook configuration, check it and set defaults.
 
@@ -201,6 +204,101 @@ sub _announce_size_gap {
     return;
 }
 
+# One `cat-file --batch` for the whole invocation instead of two `cat-file`
+# processes for every file. On a push of a few hundred files that is hundreds
+# of forks saved, which is most of what this plugin costs.
+#
+# Lock-step on purpose: one object name written, one response read, before the
+# next is written. Writing the whole list first and reading afterwards
+# deadlocks as soon as the output exceeds the pipe buffer, because git blocks
+# writing while we block writing.
+#
+# Returns a reader closure, or nothing when the process cannot be started.
+sub _open_batch {
+    my ($git) = @_;
+
+    my $cmd = eval { $git->command( 'cat-file', '--batch' ) };
+    return () if !$cmd;
+
+    my ( $to_git, $from_git ) = ( $cmd->stdin, $cmd->stdout );
+    binmode $to_git,   ':raw';
+    binmode $from_git, ':raw';
+
+    my $reader = sub {
+        my ( $name, $limit ) = @_;
+
+        print {$to_git} "$name\n" or return;
+
+        my $header = <$from_git>;
+        return if !defined $header;
+        chomp $header;
+
+        # "<object> SP missing" for anything that does not resolve.
+        return if $header =~ m/[ ]missing\z/msx;
+
+        my ( undef, $type, $size ) = split /[ ]/msx, $header;
+        return if !defined $size || $size !~ m/\A\d+\z/msx;
+
+        # Whatever the size says must be consumed either way, or the next
+        # response would be read out of the middle of this blob's content.
+        my $over    = ( $limit > 0 && $size > $limit );
+        my $content = q{};
+        my $got     = 0;
+        my $chunk;
+        while ( $got < $size ) {
+            my $want = $size - $got;
+            if ( $want > $BATCH_CHUNK ) {
+                $want = $BATCH_CHUNK;
+            }
+            my $read = read $from_git, $chunk, $want;
+            last if !$read;
+            $got += $read;
+
+            # Over the limit, the bytes are consumed and dropped rather than
+            # accumulated: the limit is about this process's memory. They do
+            # still travel down the pipe, which `cat-file -s` avoided --
+            # --batch-command could ask the size first and fetch the content
+            # only when wanted, but it needs git 2.34 and Git::Hooks asks only
+            # for 2.25.1.
+            if ( !$over ) {
+                $content .= $chunk;
+            }
+        }
+        my $eol;
+        read $from_git, $eol, 1;    # the newline cat-file writes after the content
+
+        return ( $type, $size, ( $over ? undef : $content ) );
+    };
+
+    return ( $reader, $cmd, $to_git );
+}
+
+# One blob, by whichever route is open: the batch reader when there is one, a
+# pair of processes when there is not. Returns type, size and content, with
+# content undef when the blob is over the limit, and nothing at all when the
+# name does not resolve. Extracted because the two routes inline pushed
+# check_new_or_modified_files past ProhibitExcessComplexity, which was a fair
+# complaint rather than a policy to waive.
+sub _read_blob {
+    my ( $git, $reader, $name, $limit ) = @_;
+
+    return $reader->( $name, $limit ) if $reader;
+
+    my $size = eval { $git->run( qw( cat-file -s ), $name ) };
+    return ()                       if !defined $size || $size !~ m/\A\d+\z/msx;
+    return ( 'blob', $size, undef ) if $limit > 0 && $size > $limit;
+
+    my $content = eval { $git->run( qw( cat-file -p ), $name ) };
+
+    # Undef here means the size was readable and the content was not, which is
+    # a race or a plumbing failure rather than a policy outcome. The caller
+    # treats an undef content as "over the limit", so say nothing about the
+    # size instead and let it skip the file quietly.
+    return () if !defined $content;
+
+    return ( 'blob', $size, $content );
+}
+
 #############
 # Checks
 
@@ -273,6 +371,19 @@ sub check_new_or_modified_files {
     my $our_limit = $git->get_config_integer( $CFG => 'sizelimit' ) // $DEFAULT_SIZELIMIT;
     my $errors    = 0;
 
+    # A path holding a newline cannot go through --batch at all: the protocol
+    # is newline-delimited, so git would read the two halves as two object
+    # names, answer "missing" to both, and the file would be passed over
+    # without a word. Rare, and exactly the sort of name worth looking at, so
+    # the whole run falls back to a process per file when one is present
+    # rather than quietly skipping it. git 2.42's -Z would carry such a name,
+    # but Git::Hooks asks only for 2.25.1.
+    my $has_newline = any { index( $_, "\n" ) >= 0 } @files;
+    my ( $read_blob, $batch_cmd, $batch_in );
+    if ( !$has_newline ) {
+        ( $read_blob, $batch_cmd, $batch_in ) = _open_batch($git);
+    }
+
     foreach my $filename (@files) {
 
         # The opposite case to the one in _compile_pattern, and suppressed for
@@ -332,32 +443,51 @@ sub check_new_or_modified_files {
         # interrupted answer is not a size, and comparing a non-number
         # numerically is how `5M` once meant five bytes.
         #
-        # Not a fault, which is measured rather than lenient. A submodule
-        # gitlink lands here on every commit that touches one, because
-        # "<commit>:<path>" is not a valid object name for a gitlink and
-        # cat-file refuses it for -s and -p alike. Failing the hook would break
-        # every repository with a submodule. A symlink, by contrast, reads fine
-        # and IS scanned: its content is the target path, and a bidirectional
-        # override in a link target misleads as well as one in a source line.
-        my $size = eval { $git->run( qw( cat-file -s ), $blob ) };
-        if ( !defined $size || $size !~ m/\A\d+\z/msx ) {
-            $log->debugf( "$PKG: cannot read the size of %s, so it was not read", $filename );
+        # Not a fault. What reaches this point is a plumbing failure or a race
+        # -- the index changing between being listed and being read -- and
+        # failing somebody's commit over a transient condition the plugin
+        # cannot distinguish is the wrong trade. It is logged, and the file is
+        # not checked, which is the safe half of the choice.
+        #
+        # NOT, as an earlier version of this comment claimed, a submodule
+        # gitlink: all three of the filters that feed this loop pass
+        # --ignore-submodules, so a gitlink is never listed and never arrives
+        # here at all. Measured, after a test written to prove the gitlink
+        # claim passed with the check removed and turned out to be exercising
+        # nothing.
+        #
+        # A symlink does arrive, reads fine, and IS scanned. That is right: its
+        # content is the target path, and a bidirectional override in a link
+        # target misleads as well as one in a source line.
+        my ( $type, $size, $content ) = _read_blob( $git, $read_blob, $blob, $our_limit );
+
+        # Nothing came back: a name that does not resolve, or a plumbing
+        # failure. Not this plugin's business to report, and NOT a reason to go
+        # and read the blob anyway -- an unbounded read is the denial of
+        # service the limit exists to prevent.
+        if ( !defined $size ) {
+            $log->debugf( "$PKG: cannot read %s, so it was not checked", $blob );
             next;
         }
 
-        if ( $our_limit > 0 && $size > $our_limit ) {
+        # --batch answers for any object, not only blobs: ask it for a name
+        # that resolves to a commit or a tree and it hands over that object's
+        # text, which scanned as file content would report the characters of
+        # somebody's commit message as though they were in a file.
+        #
+        # Defensive rather than reachable today: the filters pass
+        # --ignore-submodules, so the one path that would deliver a non-blob
+        # does not. It costs one comparison and it stops a change in those
+        # filters turning into reported nonsense. _open_batch's reader returns
+        # the type for this, and that is what the functions test exercises.
+        if ( defined $type && $type ne 'blob' ) {
+            $log->debugf( "$PKG: %s is a %s, not a blob, skipped", $filename, $type );
+            next;
+        }
+
+        if ( !defined $content ) {
             $log->debugf( "$PKG: %s is %s bytes, over sizelimit %s, skipped", $filename, $size, $our_limit );
             _announce_size_gap( $git, $filename, $size, $our_limit );
-            next;
-        }
-
-        my $content = eval { $git->run( qw( cat-file -p ), $blob ) };
-        if ( !defined $content ) {
-
-            # A path that cannot be read is not this plugin's business to
-            # report: a symlink, a submodule gitlink, a mode this check has no
-            # opinion about.
-            $log->debugf( "$PKG: cannot read %s:%s, skipped", $commit, $filename );
             next;
         }
 
@@ -367,6 +497,11 @@ sub check_new_or_modified_files {
         }
 
         $errors += file_errors( $git, $commit, $filename, $content );
+    }
+
+    if ($batch_cmd) {
+        close $batch_in or $log->debugf("$PKG: could not close the cat-file input");
+        $batch_cmd->close;
     }
 
     return $errors;

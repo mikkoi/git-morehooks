@@ -114,4 +114,48 @@ subtest 'the once-only warning does not leak between repositories' => sub {
     done_testing;
 };
 
+# The loop skips anything whose type is not "blob". That guard is unreachable
+# through the current filters -- they pass --ignore-submodules, so the one
+# thing that would deliver a non-blob never arrives -- but --batch will answer
+# for a commit or a tree quite happily, and scanning that text would report
+# somebody's commit message as file content. This exercises the type the
+# reader hands back, which is what the guard reads.
+subtest 'the batch reader reports the object type' => sub {
+    my ( $repo, undef, undef, undef ) = new_repos();
+    $repo->run( 'config', 'user.email', 'test@example.com' );
+    $repo->run( 'config', 'user.name',  'Test' );
+    $repo->run( 'add',    'file.txt' );
+    $repo->run( 'commit', '-m', 'one' );
+
+    # All three returns are taken, and the last two are what close the process.
+    # cat-file --batch waits on its standard input for ever, so a caller that
+    # drops them leaves a git behind and anything waiting on it hangs -- which
+    # is exactly what happened when this test first took only the reader.
+    my ( $read_blob, $batch_cmd, $batch_in ) = Git::MoreHooks::CheckNonASCII::_open_batch($repo);
+    ok( $read_blob, 'the batch process started' ) or return;
+
+    my ( $blob_type, $blob_size, $blob_content ) = $read_blob->( 'HEAD:file.txt', 0 );
+    is( $blob_type,    'blob',               'a file is reported as a blob' );
+    is( $blob_content, "first line\n",       'with its content, bytes intact' );
+    is( $blob_size,    length $blob_content, 'and a size that matches' );
+
+    my ($commit_type) = $read_blob->( 'HEAD', 0 );
+    is( $commit_type, 'commit', 'a commit is reported as a commit, which the loop then skips' );
+
+    my ($missing) = $read_blob->( 'HEAD:nosuch', 0 );
+    is( $missing, undef, 'a name that does not resolve returns nothing' );
+
+    # Over the limit the content is dropped rather than accumulated, and the
+    # size still comes back so the caller can say what it skipped.
+    my ( $big_type, $big_size, $big_content ) = $read_blob->( 'HEAD:file.txt', 2 );
+    is( $big_type,    'blob', 'an oversize blob still reports its type' );
+    is( $big_size,    11,     'and its size' );
+    is( $big_content, undef,  'but its content is not kept' );
+
+    close $batch_in or note q{could not close the batch input};
+    $batch_cmd->close;
+
+    done_testing;
+};
+
 done_testing();

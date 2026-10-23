@@ -2,6 +2,9 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
             * Add Text::Glob to cpanfile.
+            * CheckNonASCII: read every blob through one `cat-file
+                --batch` instead of two cat-file processes per file.
+                Measured at 300 files: 2.48s to 0.55s.
             * CheckNonASCII: an unreadable blob size no longer falls
                 through to reading the blob. A submodule gitlink hits
                 that path routinely, so it is a silent skip and not a
