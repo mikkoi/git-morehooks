@@ -2,6 +2,12 @@ Revision history for {{$dist->name}}
 
 {{$NEXT}}
             * Add Text::Glob to cpanfile.
+            * CheckNonASCII: the content fault had its options hash
+                swallowed by an unparenthesised join, so it reported
+                HASH(0x...) and lost its prefix, commit, option and
+                details. Fixed, and pinned by a test.
+            * CheckNonASCII: document that a symlink is read as its
+                target path, which is deliberate.
             * CheckNonASCII: read every blob through one `cat-file
                 --batch` instead of two cat-file processes per file.
                 Measured at 300 files: 2.48s to 0.55s.

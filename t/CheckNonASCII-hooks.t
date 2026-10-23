@@ -266,4 +266,33 @@ $repo->run( qw/config githooks.plugin Git::MoreHooks::CheckNonASCII/, { env => \
     $repo->run( qw( config --unset-all core.quotepath ), { env => \%env } );
 }
 
+# The content fault must carry its context. Without parentheses round the join
+# that builds the message, the options hash became another thing to join, came
+# out as HASH(0x...) in the message, and fault() lost the prefix, the commit,
+# the option name and the details in one go.
+{
+    set_config($repo);
+    write_file( 'context.txt', "em \xe2\x80\x94 dash\n" );
+    my ( undef, undef, undef, $err ) =
+      test_command( $repo, 'commit', '-m', 'A commit', { env => \%env } );
+    like( $err, qr/violates [ ] option [ ] 'name'/msx, 'the content fault names its option' );
+    like( $err, qr/named [ ] by [ ] codepoint/msx,     'and carries its details text' );
+    unlike( $err, qr/HASH[(]0x/msx, 'and does not stringify the options hash into the message' );
+    $repo->run( qw( reset --hard HEAD ), { env => \%env } );
+}
+
+# A symlink's content IS its target path, so a target that is not ASCII is
+# reported. That is the point rather than a side effect: a bidirectional
+# override in a link target makes the link render as pointing somewhere other
+# than where it points.
+{
+    set_config($repo);
+    my $link = path( $T->child('repo'), 'innocent-name' );
+    symlink "safe\xe2\x80\xaegpj.exe", $link->stringify
+      or plan skip_all => 'this platform cannot make symlinks';
+    $repo->run( 'add', 'innocent-name', { env => \%env } );
+    commit_nok( 'a symlink with an override in its target is reported', qr/U[+]202E/msx );
+    $repo->run( qw( reset --hard HEAD ), { env => \%env } );
+}
+
 done_testing();

@@ -340,8 +340,14 @@ sub file_errors {
     }
 
     $git->fault(
-        "This file holds characters outside ASCII.\n" . join "\n",
-        @findings,
+
+        # The join is parenthesised, and has to be: without the parentheses
+        # `"..." . join "\n", @findings, {...}` parses as
+        # `join( "\n", @findings, {...} )`, so the options hash becomes another
+        # thing to join, arrives in the message as HASH(0x...), and fault()
+        # receives one argument instead of two -- losing the prefix, the commit
+        # id, the option name and the details all at once.
+        "This file holds characters outside ASCII.\n" . ( join "\n", @findings ),
         {
             prefix  => $PKG,
             commit  => $commit,
@@ -623,6 +629,25 @@ B<Binary files are skipped>, detected the way git itself detects them: a NUL
 byte in the content. A PNG is mostly bytes above C<0x7F> and not one of them is
 a homoglyph, so reporting them would be noise that trains people to ignore the
 plugin.
+
+=head2 Symlinks
+
+A symlink is stored as a blob whose content is the target path, so this plugin
+reads the target and reports what is in it. That is deliberate. A bidirectional
+override in a target makes a link render as pointing somewhere other than where
+it points, which is the same attack as in a source line and rather more useful
+to an attacker, because the name of the link itself can be perfectly ordinary:
+
+    innocent-name -> safe<U+202E>gpj.exe
+
+A finding against a symlink therefore refers to its B<target>, not to a file's
+contents, although the message does not distinguish the two -- the mode is not
+in what the file filters return, and fetching it per file would undo the saving
+that reading every blob through one C<cat-file --batch> buys.
+
+A target in UTF-16 cannot arise: a POSIX symlink target is a NUL-terminated
+string, so it cannot contain the NUL bytes UTF-16 uses, and a target that
+somehow did would be seen as binary and skipped.
 
 =head1 CONFIGURATION
 
