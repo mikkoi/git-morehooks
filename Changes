@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Add Perl::Critic::StricterSubs to DevelopSuggests Prereqs.
             * CheckTrailers: the once-only report of an interpret-trailers
                 failure is held per repository, not in a package variable,
                 so a second repository handled by the same interpreter is
