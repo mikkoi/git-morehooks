@@ -290,7 +290,7 @@ use Path::Tiny;
 use Log::Any qw{$log};
 use Module::Load qw{ load };
 use Text::Glob qw{ glob_to_regex };
-use List::MoreUtils qw( any );
+use List::Util qw( any );
 
 
 my $PKG = __PACKAGE__;
