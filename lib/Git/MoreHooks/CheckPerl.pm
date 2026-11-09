@@ -287,8 +287,8 @@ L<Git::Hooks> package.
 
 # use Git::MoreHooks::CheckCommitBase \&do_hook;
 
-use Git::Hooks 3.001001;    # v3.1.1: GITHOOKS_CHECK_* drivers
-use Path::Tiny;
+use Git::Hooks 4.000_000;
+use Path::Tiny qw( path );
 use Log::Any qw{$log};
 use Module::Load qw{ load };
 use Text::Glob qw{ glob_to_regex };
