@@ -292,7 +292,7 @@ use Path::Tiny;
 use Log::Any qw{$log};
 use Module::Load qw{ load };
 use Text::Glob qw{ glob_to_regex };
-use List::Util qw( any );
+use List::Util 1.33 qw( any none );
 
 
 my $PKG = __PACKAGE__;
@@ -496,7 +496,7 @@ sub check_new_or_modified_files {
         ## no critic (RegularExpressions::RequireDotMatchAnything)
         ## no critic (RegularExpressions::RequireExtendedFormatting)
         ## no critic (RegularExpressions::RequireLineBoundaryMatching)
-        next if( ! any { $basename =~ m/$_/ } @name_patterns);
+        next if( none { $basename =~ m/$_/ } @name_patterns);
         my $content = $git->run(qw/cat-file -p/, $sha);
         $log->tracef( __PACKAGE__ . q{::} . 'check_new_or_modified_files():content=%s', $content);
 
