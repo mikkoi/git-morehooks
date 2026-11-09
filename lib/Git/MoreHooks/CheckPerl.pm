@@ -192,6 +192,26 @@ Default values are:
         name = *.t
 
 
+=head3 githooks.checkperl.dir STRING
+
+Give exact path, one or many, to check all the files
+in those paths. This is not PATTERN.
+
+Default values are:
+
+    [githooks "checkperl"]
+        dir = bin
+        dir = script
+
+
+=head3 githooks.checkperl.filepath STRING
+
+Give exact filepath, one or many, to check any particular file .
+This is not PATTERN.
+
+No defaults.
+
+
 =head3 githooks.checkperl.critic.active BOOL
 
 Activate or deactivate Perl::Critic check.
@@ -310,7 +330,7 @@ my $CFG = 'githooks.' . $HOOK;
 
 sub _setup_config {
     my ($git) = @_;
-    $log->debugf( __PACKAGE__ . '::_setup_config(%s):', '$git' );
+    $log->debugf( __PACKAGE__ . '::_setup_config(%s):', $git );
 
     # The configuration is cached during the first invocation
     # in the object Git::Repository object.
@@ -329,6 +349,11 @@ sub _setup_config {
         '*.psgi',
         '*.t',
     ];
+    $default->{'dirpath'} //= [
+        'bin',
+        'script',
+    ];
+    $default->{'filepath'} //= [];
 
     $default->{'critic'} //= {};
     $default->{'perl-c'} //= {};
@@ -483,7 +508,9 @@ sub check_new_or_modified_files {
         }
         push @name_patterns, $pattern;
     }
-    $log->debugf( __PACKAGE__ . q{::} . 'check_new_or_modified_files():name_patterns=%s', \@name_patterns);
+    my @dirpaths = @{ $config->{'dirpath'} };
+    my @filepaths = @{ $config->{'filepath'} };
+    $log->debugf( __PACKAGE__ . q{::} . 'check_new_or_modified_files():name_patterns=%s, dirpaths=%s, filepaths=%s', \@name_patterns, \@dirpaths, \@filepaths);
     foreach my $file ($git->run(qw/ls-files -s/, @files)) {
         my ($mode, $sha, $n, $filename) = split q{ }, $file;
         $log->tracef( __PACKAGE__ . q{::}
@@ -491,12 +518,18 @@ sub check_new_or_modified_files {
             ($mode, $sha, $n, $filename)
         );
         my $basename = path($filename)->basename;
-        $log->debugf( __PACKAGE__ . q{::} . 'check_new_or_modified_files():basename=%s', $basename);
+        my $dir = path($filename)->parent->stringify;
+        $log->debugf( __PACKAGE__ . q{::} . 'check_new_or_modified_files():basename=%s, dir=%s, filename=%s', $basename, $dir, $filename);
         # The regexes generated from globs might not be /msx compatible.
         ## no critic (RegularExpressions::RequireDotMatchAnything)
         ## no critic (RegularExpressions::RequireExtendedFormatting)
         ## no critic (RegularExpressions::RequireLineBoundaryMatching)
-        next if( none { $basename =~ m/$_/ } @name_patterns);
+        next if(
+            ( none { $basename =~ m/$_/ } @name_patterns )
+            && ( none { $dir eq $_ } @dirpaths )
+            && ( none { $filename eq $_ } @filepaths )
+        );
+        $log->tracef( __PACKAGE__ . q{::} . 'check_new_or_modified_files(): match found');
         my $content = $git->run(qw/cat-file -p/, $sha);
         $log->tracef( __PACKAGE__ . q{::} . 'check_new_or_modified_files():content=%s', $content);
 

@@ -108,11 +108,40 @@ $repo->run( qw(commit --allow-empty -m), 'Initial (Empty) Commit', { env => {%gi
         GIT_COMMITTER_NAME  => 'My Self',
         GIT_COMMITTER_EMAIL => 'myself@example.com',
     );
-    check_can_commit( 'empty perl script file', 'perl-script.pl', 'append', q{}, \%env );
+    check_can_commit( 'OK commit: empty perl script file', 'perl-script.pl', 'append', q{}, \%env );
 
     my $script = 'use warnings; say "Hello, World!";';
 
-    check_cannot_commit( 'perl script file #2', undef, 'perl-script-test-2.pl', 'append', $script, \%env );
+    check_cannot_commit( 'FAIL commit: perl script file #2', undef, 'perl-script-test-2.pl', 'append', $script, \%env );
+
+    # Test default dirpaths:
+    my $content_ok = <<"EOF";
+#!/usr/bin/env perl
+## no critic (InputOutput::RequireCheckedSyscalls)
+use strict;
+use warnings;
+use feature qw( say );
+say 'Hello, World!';
+exit 0;
+EOF
+    check_can_commit( 'OK commit: bin/pass-critic-script', 'bin/pass-critic-script', 'append', $content_ok, \%env );
+
+    my $content_fail = <<"EOF";
+#!/usr/bin/env perl
+## no critic (InputOutput::RequireCheckedSyscalls)
+## no critic (ControlStructures::ProhibitPostfixControls)
+use strict;
+use warnings;
+use feature qw( say );
+say 'Hello, World!' if( -t __FILE__ );
+exit 0;
+EOF
+    # Same script can be committed because it is in a directory which is not checked.
+    check_can_commit( 'OK commit: not-bin/fail-critic-script', 'not-bin/fail-critic-script', 'append', $content_fail, \%env );
+    # Same script fails to be committed because it is in a directory which is checked.
+    check_cannot_commit( 'FAIL commit: bin/fail-critic-script',
+        qr/[#][ ]Use[ ]IO::Interactive::is_interactive/msx
+        . qr/.*[(]Severity:[ ]5[)]/msx, 'bin/fail-critic-script', 'append', $content_fail, \%env );
 }
 
 done_testing();

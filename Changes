@@ -1,6 +1,7 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+            * Add options dirpath and filepath to CheckPerl.
             * Switch List::MoreUtils to core List::Util. Function `any` available since Perl v5.19.5.
             * Add Perl::Critic::StricterSubs to DevelopSuggests Prereqs.
             * CheckTrailers: the once-only report of an interpret-trailers
