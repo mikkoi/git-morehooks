@@ -146,6 +146,8 @@ for using different checkers.
 
 This plugin is configured by the following git options.
 
+N.B. If you set the same config item, it replaces the default.
+
 
 =head3 githooks.checkperl.use-temp-files BOOL
 
@@ -310,6 +312,9 @@ sub _setup_config {
     my ($git) = @_;
     $log->debugf( __PACKAGE__ . '::_setup_config(%s):', '$git' );
 
+    # The configuration is cached during the first invocation
+    # in the object Git::Repository object.
+    # https://metacpan.org/pod/Git::Repository::Plugin::GitHooks#get_config-[SECTION-[VARIABLE]]
     my $config = $git->get_config();
     $log->tracef( __PACKAGE__ . '::_setup_config(): Current Git config:\n%s.', $config );
 
@@ -319,7 +324,11 @@ sub _setup_config {
     # Set default config values.
     my $default = $config->{ lc $CFG };
     $default->{'use-temp-files'} //= [0];
-    $default->{'name'} //= ['*.p[lm]', '*.psgi', '*.t'];
+    $default->{'name'} //= [
+        '*.p[lm]',
+        '*.psgi',
+        '*.t',
+    ];
 
     $default->{'critic'} //= {};
     $default->{'perl-c'} //= {};
@@ -331,7 +340,7 @@ sub _setup_config {
     # Perl -c
     $default->{'perl-c'}->{'active'} //= [0];
 
-    $log->tracef( __PACKAGE__ . '::_setup_config(): Final Git config:\n%s.', $config );
+    $log->tracef( __PACKAGE__ . '::_setup_config(): Final Git config:\n%s.', $git->get_config() );
 
     return 1;
 }
