@@ -1,6 +1,8 @@
 Revision history for {{$dist->name}}
 
 {{$NEXT}}
+
+0.021     2026-11-10 18:30:19+01:00 Europe/Stockholm
             * Add options dirpath and filepath to CheckPerl.
             * Switch List::MoreUtils to core List::Util. Function `any` available since Perl v5.19.5.
             * Add Perl::Critic::StricterSubs to DevelopSuggests Prereqs.
