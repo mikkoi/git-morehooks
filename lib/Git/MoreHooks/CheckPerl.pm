@@ -1,4 +1,6 @@
 ## no critic (ValuesAndExpressions::RequireInterpolationOfMetachars)
+## no critic (Subroutines::ProhibitCallsToUnexportedSubs)
+## no critic (Modules::RequireExplicitInclusion)
 
 package Git::MoreHooks::CheckPerl;
 

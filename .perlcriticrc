@@ -39,4 +39,4 @@ allow-unsafe = 0
 exclude = Modules::RequireVersionVar Documentation CodeLayout::RequireTidyCode
 
 [Subroutines::ProhibitCallsToUndeclaredSubs]
-exempt_subs = Getopt::Long::GetOptions
+exempt_subs = Getopt::Long::GetOptions Test2::V1::T2
